@@ -126,3 +126,83 @@ fn main() {
 }
 
 // Tests ==================================================================================== Tests
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_basic_multiplication() {
+        let input = "mul(2,3)";
+        let program = input.parse::<Program>().unwrap();
+        assert_eq!(program.instructions.len(), 1);
+        match &program.instructions[0] {
+            Instruction::Multiply(a, b) => {
+                assert_eq!(*a, 2);
+                assert_eq!(*b, 3);
+            }
+            _ => panic!("Expected Multiply instruction"),
+        }
+    }
+
+    #[test]
+    fn test_parse_do_dont_instructions() {
+        let input = "do()don't()";
+        let program = input.parse::<Program>().unwrap();
+        assert_eq!(program.instructions.len(), 2);
+        match &program.instructions[0] {
+            Instruction::Do => (),
+            _ => panic!("Expected Do instruction"),
+        }
+        match &program.instructions[1] {
+            Instruction::Dont => (),
+            _ => panic!("Expected Dont instruction"),
+        }
+    }
+
+    #[test]
+    fn test_mixed_instructions() {
+        let input = "mul(4,5)do()mul(2,3)don't()mul(6,7)";
+        let program = input.parse::<Program>().unwrap();
+        assert_eq!(program.instructions.len(), 5);
+    }
+
+    #[test]
+    fn test_ignore_invalid_text() {
+        let input = "hello mul(1,2) world do() test";
+        let program = input.parse::<Program>().unwrap();
+        assert_eq!(program.instructions.len(), 2);
+    }
+
+    #[test]
+    fn test_part1_calculation() {
+        let input = "mul(2,3)what()mul(4,5)mul(3,3)";
+        let program = input.parse::<Program>().unwrap();
+        let sum: usize = program
+            .instructions
+            .iter()
+            .filter_map(|inst| match inst {
+                Instruction::Multiply(a, b) => Some(a * b),
+                _ => None,
+            })
+            .sum();
+        assert_eq!(sum, 6 + 20 + 9);
+    }
+
+    #[test]
+    fn test_part2_calculation() {
+        let input = "mul(2,3)don't()mul(4,5)do()mul(3,3)";
+        let program = input.parse::<Program>().unwrap();
+        let mut enabled = true;
+        let mut sum = 0;
+
+        for inst in program.instructions {
+            match inst {
+                Instruction::Multiply(a, b) if enabled => sum += a * b,
+                Instruction::Do => enabled = true,
+                Instruction::Dont => enabled = false,
+                _ => {}
+            }
+        }
+        assert_eq!(sum, 6 + 9); // 4*5 is skipped due to don't()
+    }
+}

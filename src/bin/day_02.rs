@@ -78,7 +78,7 @@ impl Data {
 
         for i in 1..levels.len() {
             let diff = (levels[i] - levels[i - 1]).abs();
-            if diff < 1 || diff > 3 {
+            if !(1..3).contains(&diff) {
                 return false;
             }
         }
@@ -170,3 +170,62 @@ fn main() {
 }
 
 // Tests ==================================================================================== Tests
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_input() {
+        let input = "1 2 3\n4 5 6";
+        let data = Data::from_str(input).unwrap();
+        assert_eq!(data.levels, vec![vec![1, 2, 3], vec![4, 5, 6]]);
+    }
+
+    #[test]
+    fn test_is_always_increasing() {
+        assert!(is_always_increasing(&vec![1, 2, 3, 4]));
+        assert!(!is_always_increasing(&vec![1, 3, 2, 4]));
+        assert!(!is_always_increasing(&vec![4, 3, 2, 1]));
+    }
+
+    #[test]
+    fn test_is_report_safe() {
+        let data = Data { levels: vec![] };
+
+        // Test increasing sequence
+        assert!(data.is_report_safe(&vec![1, 2, 3, 4]));
+
+        // Test decreasing sequence
+        assert!(data.is_report_safe(&vec![4, 3, 2, 1]));
+
+        // Test invalid differences
+        assert!(!data.is_report_safe(&vec![1, 4, 7]));
+
+        // Test single value
+        assert!(data.is_report_safe(&vec![1]));
+
+        // Test empty sequence
+        assert!(data.is_report_safe(&vec![]));
+    }
+
+    #[test]
+    fn test_is_report_safe_with_dampener() {
+        let data = Data { levels: vec![] };
+
+        // Already safe sequence
+        assert!(data.is_report_safe_with_dampener(&vec![1, 2, 3]));
+
+        // Can become safe by removing middle element
+        assert!(data.is_report_safe_with_dampener(&vec![1, 5, 3]));
+
+        // Cannot become safe by removing any element
+        assert!(!data.is_report_safe_with_dampener(&vec![1, 5, 8]));
+    }
+
+    #[test]
+    fn test_count_safe_arrangements() {
+        let input = "1 2 3\n1 4 2\n1 2 5";
+        let data = Data::from_str(input).unwrap();
+        assert_eq!(data.count_safe_arrangements(), 1);
+    }
+}
