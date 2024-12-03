@@ -8,53 +8,116 @@ use std::str::FromStr;
 // Variables  =========================================================================== Variables
 const INPUT: &str = include_str!("../../data/inputs/day_03.txt");
 
-struct Multiplications {
-    muls: Vec<(usize, usize)>,
+///
+/// # Instruction
+/// Represents different types of instructions that can be found in the corrupted memory
+///
+#[derive(Debug)]
+enum Instruction {
+    Multiply(usize, usize),
+    Do,
+    Dont,
 }
 
-impl FromStr for Multiplications {
+///
+/// # Program
+/// Represents the parsed program with its sequence of instructions
+///
+#[derive(Debug)]
+struct Program {
+    instructions: Vec<Instruction>,
+}
+
+impl FromStr for Program {
     type Err = ();
 
     ///
-    /// # from_str Parse the input string to a Multiplications struct. This is
-    /// used for the part 1 of the challenge. A `mul` function is defined as
-    /// `mul(a, b)` where `a` and `b` are integers between 0 and 999, hence the `\d{1,3}`.
+    /// # from_str
+    /// Parses the input string to extract valid instructions
+    ///
+    /// ## Arguments
+    /// * `s` - The input string containing corrupted memory
+    ///
+    /// ## Returns
+    /// * `Result<Program, ()>` - The parsed program or an error
+    ///
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut muls = Vec::new();
+        let mut instructions = Vec::new();
 
-        let mul_regex = regex::Regex::new(r"mul\(\d{1,3},\d{1,3}\)").unwrap();
+        // Compile regexes for different instructions
+        let mul_regex = regex::Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
+        let do_regex = regex::Regex::new(r"do\(\)").unwrap();
+        let dont_regex = regex::Regex::new(r"don't\(\)").unwrap();
 
-        for cap in mul_regex.captures_iter(s) {
-            let mut nums = cap[0].split(|c| c == '(' || c == ',' || c == ')');
-
-            nums.next(); // ignore the first element
-
-            let a = nums.next().unwrap().parse().unwrap();
-            let b = nums.next().unwrap().parse().unwrap();
-
-            muls.push((a, b));
+        // Track position to process instructions in order
+        let mut pos = 0;
+        while pos < s.len() {
+            if let Some(mat) = mul_regex.find_at(s, pos) {
+                if mat.start() == pos {
+                    let caps = mul_regex.captures(&s[pos..mat.end()]).unwrap();
+                    let a = caps[1].parse().unwrap();
+                    let b = caps[2].parse().unwrap();
+                    instructions.push(Instruction::Multiply(a, b));
+                    pos = mat.end();
+                    continue;
+                }
+            }
+            if let Some(mat) = do_regex.find_at(s, pos) {
+                if mat.start() == pos {
+                    instructions.push(Instruction::Do);
+                    pos = mat.end();
+                    continue;
+                }
+            }
+            if let Some(mat) = dont_regex.find_at(s, pos) {
+                if mat.start() == pos {
+                    instructions.push(Instruction::Dont);
+                    pos = mat.end();
+                    continue;
+                }
+            }
+            pos += 1;
         }
 
-        Ok(Multiplications { muls })
+        Ok(Program { instructions })
     }
 }
+
 // Functions  =========================================================================== Functions
 pub fn response_part_1() {
     println!("Day 03 - Part 1");
 
-    let sum = INPUT
-        .parse::<Multiplications>()
+    let sum: usize = INPUT
+        .parse::<Program>()
         .unwrap()
-        .muls
+        .instructions
         .iter()
-        .map(|(a, b)| a * b)
-        .sum::<usize>();
+        .filter_map(|inst| match inst {
+            Instruction::Multiply(a, b) => Some(a * b),
+            _ => None,
+        })
+        .sum();
 
     println!("The sum of all multiplications is: {}", sum);
 }
 
 pub fn response_part_2() {
     println!("Day 03 - Part 2");
+
+    let program = INPUT.parse::<Program>().unwrap();
+    let mut enabled = true;
+    let mut sum = 0;
+
+    for inst in program.instructions {
+        match inst {
+            Instruction::Multiply(a, b) if enabled => sum += a * b,
+            Instruction::Do => enabled = true,
+            Instruction::Dont => enabled = false,
+            _ => {}
+        }
+    }
+
+    println!("The sum of all multiplications is: {}", sum);
 }
 
 fn main() {
