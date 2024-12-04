@@ -49,6 +49,7 @@ impl FromStr for Data {
 ///
 /// ## Returns
 /// * `bool` - True if the levels are always increasing
+#[inline(always)]
 fn is_always_increasing(levels: &Vec<i32>) -> bool {
     for i in 1..levels.len() {
         if levels[i] < levels[i - 1] {
