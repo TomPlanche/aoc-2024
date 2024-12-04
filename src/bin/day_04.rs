@@ -2,6 +2,23 @@
 /// # day_04.rs
 /// Code for the day 04 of the Advent of Code challenge year 2024
 ///
+/// Algorithm Description:
+///
+/// Part 1: Search for "XMAS" Occurrences
+/// - Parse input into a grid structure
+/// - Search for the word "XMAS" in all 8 directions (horizontal, vertical, and diagonal)
+/// - For each position in the grid:
+///   - Check each direction using delta coordinates
+///   - Verify if all characters match "XMAS" sequentially
+/// - Count total valid occurrences
+///
+/// Part 2: Find X-MAS Patterns
+/// - Look for specific cross patterns where:
+///   - 'A' is in the center
+///   - 'X', 'M', 'S' form an X-pattern around the 'A'
+///   - Diagonal pairs must sum to specific ASCII values (160)
+/// - Count total valid X-patterns in the grid
+///
 // Imports  ==============================================================================  Imports
 use std::str::FromStr;
 
@@ -142,7 +159,6 @@ impl Grid {
                 if chars.len() == 4
                     && chars[0] + chars[3] == 160 // diagonal pair 1
                     && chars[1] + chars[2] == 160
-                // diagonal pair 2
                 {
                     count += 1;
                 }
