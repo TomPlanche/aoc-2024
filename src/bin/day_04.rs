@@ -108,7 +108,20 @@ fn check_word_at_position(
 /// # count_x_mas_occurrences
 ///
 /// Counts the number of X-shaped MAS patterns in the grid.
-/// Each arm of the X can be either "MAS" or "SAM" (forwards or backwards).
+/// A valid X-MAS pattern consists of:
+/// - An 'A' in the center
+/// - Two diagonal pairs of 'M' and 'S' that form an X
+/// - Each diagonal must have one 'M' and one 'S' (in any order)
+///
+/// The solution uses the ASCII property that 'M' (77) + 'S' (83) = 160
+/// This lets us verify each diagonal pair with a single sum check.
+///
+/// Valid patterns:
+/// ```text
+/// M.S     S.S
+/// .A.  or .A.
+/// M.S     M.M
+/// ```
 ///
 /// ## Arguments
 ///
@@ -119,113 +132,28 @@ fn check_word_at_position(
 /// * `usize` - The total number of X-MAS patterns found
 ///
 fn count_x_mas_occurrences(grid: &[&str]) -> usize {
-    let height = grid.len();
-    let width = grid[0].len();
     let mut count = 0;
 
-    // We need at least 3x3 space to form an X-MAS
-    for i in 1..height - 1 {
-        for j in 1..width - 1 {
-            if check_x_mas_at_position(grid, i, j) {
-                count += 1;
+    // Iterate through all possible center positions (excluding edges)
+    for i in 1..grid.len() - 1 {
+        for j in 1..grid[0].len() - 1 {
+            // Check if center is 'A'
+            if grid[i].chars().nth(j).unwrap() == 'A' {
+                // Get the four corner characters of the X pattern
+                let top_left = grid[i - 1].chars().nth(j - 1).unwrap() as u32; // Can be 'M' or 'S'
+                let bottom_right = grid[i + 1].chars().nth(j + 1).unwrap() as u32; // Must pair with top_left
+                let bottom_left = grid[i + 1].chars().nth(j - 1).unwrap() as u32; // Can be 'M' or 'S'
+                let top_right = grid[i - 1].chars().nth(j + 1).unwrap() as u32; // Must pair with bottom_left
+
+                // Check if both diagonals are valid M-S pairs (sum = 160)
+                if (top_left + bottom_right == 160) && (bottom_left + top_right == 160) {
+                    count += 1;
+                }
             }
         }
     }
 
     count
-}
-
-///
-/// # check_x_mas_at_position
-///
-/// Checks if an X-MAS pattern exists with its center at the given position.
-/// The pattern consists of two "MAS" strings forming an X shape.
-///
-/// ## Arguments
-///
-/// * `grid` - The word search grid
-/// * `row` - Center row position
-/// * `col` - Center column position
-///
-/// ## Returns
-///
-/// * `bool` - True if an X-MAS pattern is found, false otherwise
-///
-fn check_x_mas_at_position(grid: &[&str], row: usize, col: usize) -> bool {
-    let directions = [
-        // Down-right and up-left combination
-        ((1, 1), (-1, -1)),
-        // Up-right and down-left combination
-        ((-1, 1), (1, -1)),
-    ];
-
-    for &(dir1, dir2) in &directions {
-        if check_x_mas_arms(grid, row, col, dir1, dir2) {
-            return true;
-        }
-    }
-    false
-}
-
-///
-/// # check_x_mas_arms
-///
-/// Checks if two valid MAS strings exist in the specified directions forming an X.
-///
-/// ## Arguments
-///
-/// * `grid` - The word search grid
-/// * `row` - Center row position
-/// * `col` - Center column position
-/// * `dir1` - Direction tuple for first arm (dy, dx)
-/// * `dir2` - Direction tuple for second arm (dy, dx)
-///
-/// ## Returns
-///
-/// * `bool` - True if both arms form valid MAS strings
-///
-fn check_x_mas_arms(
-    grid: &[&str],
-    row: usize,
-    col: usize,
-    dir1: (i32, i32),
-    dir2: (i32, i32),
-) -> bool {
-    let height = grid.len() as i32;
-    let width = grid[0].len() as i32;
-
-    // Helper closure to get character at position
-    let get_char = |r: i32, c: i32| -> Option<char> {
-        if r >= 0 && r < height && c >= 0 && c < width {
-            Some(grid[r as usize].chars().nth(c as usize).unwrap())
-        } else {
-            None
-        }
-    };
-
-    // Extract characters for both arms
-    let mut arm1 = Vec::new();
-    let mut arm2 = Vec::new();
-
-    for i in -1..=1 {
-        let (r1, c1) = (row as i32 + dir1.0 * i, col as i32 + dir1.1 * i);
-        let (r2, c2) = (row as i32 + dir2.0 * i, col as i32 + dir2.1 * i);
-
-        if let (Some(ch1), Some(ch2)) = (get_char(r1, c1), get_char(r2, c2)) {
-            arm1.push(ch1);
-            arm2.push(ch2);
-        } else {
-            return false;
-        }
-    }
-
-    // Check if both arms are valid MAS strings (forward or backward)
-    let is_valid_mas = |chars: &[char]| -> bool {
-        let s: String = chars.iter().collect();
-        s == "MAS" || s == "SAM"
-    };
-
-    is_valid_mas(&arm1) && is_valid_mas(&arm2)
 }
 
 ///
@@ -288,5 +216,20 @@ mod tests {
         let grid = vec!["XMAS", "AMXX", "SSAA"];
         assert!(check_word_at_position(&grid, 0, 0, 0, 1, "XMAS")); // horizontal
         assert!(!check_word_at_position(&grid, 0, 0, 1, 0, "XMAS")); // vertical (should fail)
+    }
+
+    #[test]
+    fn test_x_mas_pattern() {
+        let test_input = vec!["M.S", ".A.", "M.S"];
+        assert_eq!(count_x_mas_occurrences(&test_input), 1);
+
+        let test_input2 = vec!["S.S", ".A.", "M.M"];
+        assert_eq!(count_x_mas_occurrences(&test_input2), 1);
+    }
+
+    #[test]
+    fn test_x_mas_pattern_invalid() {
+        let test_input = vec!["M.M", ".A.", "S.S"];
+        assert_eq!(count_x_mas_occurrences(&test_input), 0);
     }
 }
