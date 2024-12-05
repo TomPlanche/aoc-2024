@@ -89,6 +89,40 @@ impl PrintQueue {
             .map(|update| update[update.len() / 2])
             .collect()
     }
+
+    /// Orders a single update according to the rules
+    fn order_update(&self, update: &[i32]) -> Vec<i32> {
+        let mut ordered: Vec<i32> = update.to_vec();
+        let mut changed = true;
+
+        // Keep swapping adjacent elements until no more changes are needed
+        while changed {
+            changed = false;
+            for i in 0..ordered.len() - 1 {
+                for rule in &self.rules {
+                    // If we find two adjacent elements that violate a rule, swap them
+                    if ordered[i] == rule.after && ordered[i + 1] == rule.before {
+                        ordered.swap(i, i + 1);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        ordered
+    }
+
+    /// Gets middle page numbers of reordered invalid updates
+    fn get_middle_pages_fixed(&self) -> Vec<i32> {
+        self.updates
+            .iter()
+            .filter(|update| !self.is_valid_update(update))
+            .map(|update| {
+                let ordered = self.order_update(update);
+                ordered[ordered.len() / 2]
+            })
+            .collect()
+    }
 }
 
 // Variables  =========================================================================== Variables
@@ -105,7 +139,13 @@ pub fn response_part_1() {
 
 pub fn response_part_2() {
     println!("Day 05 - Part 2");
-    // Part 2 not yet available
+
+    let queue: PrintQueue = INPUT.parse().unwrap();
+    let middle_sum: i32 = queue.get_middle_pages_fixed().iter().sum();
+    println!(
+        "Sum of middle pages from reordered invalid updates: {}",
+        middle_sum
+    );
 }
 
 fn main() {
@@ -148,5 +188,13 @@ mod tests {
         let queue: PrintQueue = input.parse().unwrap();
         let middle_pages = queue.get_middle_pages();
         assert_eq!(middle_pages, vec![61, 53, 29]);
+    }
+
+    #[test]
+    fn test_order_update() {
+        let input = "97|75\n75|47\n47|61\n61|53\n\n75,97,47,61,53";
+        let queue: PrintQueue = input.parse().unwrap();
+        let ordered = queue.order_update(&vec![75, 97, 47, 61, 53]);
+        assert_eq!(ordered, vec![97, 75, 47, 61, 53]);
     }
 }
