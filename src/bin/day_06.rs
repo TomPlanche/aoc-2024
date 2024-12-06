@@ -6,11 +6,12 @@ use std::str::FromStr;
 ///
 // Imports  ==============================================================================  Imports
 use aoc_2024::Point;
+use indicatif::ProgressBar;
 
 // Variables  =========================================================================== Variables
 const INPUT: &str = include_str!("../../data/inputs/day_06.txt");
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Directions {
     Up,
     Down,
@@ -274,19 +275,155 @@ impl Grid {
 
         visited.len()
     }
+
+    ///
+    /// # simulate_with_obstacle
+    /// Simulates the guard's movement with an additional obstacle and checks if it creates a loop.
+    ///
+    /// ## Arguments
+    /// * `obstacle` - The position of the obstacle to add
+    ///
+    /// ## Returns
+    /// * `Option<bool>` - Some(true) if the obstacle creates a loop, Some(false) if it doesn't, None if the obstacle is invalid
+    fn simulate_with_obstacle(&mut self, obstacle: Point<i32>) -> Option<bool> {
+        if obstacle == self.guard.position || self.is_obstacle(&obstacle) {
+            return None;
+        }
+
+        let mut visited_states = std::collections::HashSet::new();
+        let mut temp_obstacles = self.obstacles.clone();
+        temp_obstacles.push(obstacle);
+
+        let mut current_pos = self.guard.position;
+        let mut current_dir = self.guard.direction;
+
+        loop {
+            // Create a unique state representation
+            let state = (current_pos.clone(), current_dir);
+            if !visited_states.insert(state) {
+                // Found a loop
+                return Some(true);
+            }
+
+            let next_pos = match current_dir {
+                Directions::Up => Point::new(current_pos.x, current_pos.y - 1),
+                Directions::Down => Point::new(current_pos.x, current_pos.y + 1),
+                Directions::Left => Point::new(current_pos.x - 1, current_pos.y),
+                Directions::Right => Point::new(current_pos.x + 1, current_pos.y),
+            };
+
+            // Check if out of bounds
+            if !self.in_bounds(&next_pos) {
+                return Some(false);
+            }
+
+            // Check if hitting obstacle (including the new one)
+            if temp_obstacles.contains(&next_pos) {
+                current_dir = match current_dir {
+                    Directions::Up => Directions::Right,
+                    Directions::Right => Directions::Down,
+                    Directions::Down => Directions::Left,
+                    Directions::Left => Directions::Up,
+                };
+            } else {
+                current_pos = next_pos;
+            }
+
+            // Safety check for infinite loops
+            if visited_states.len() > self.width * self.height * 4 {
+                return Some(false);
+            }
+        }
+    }
+
+    ///
+    /// # count_possible_loop_positions
+    /// Counts the number of possible loop positions that can be added to the grid
+    ///
+    /// ## Returns
+    /// * `usize` - The number of possible loop positions
+    fn count_possible_loop_positions(&mut self) -> usize {
+        let mut count = 0;
+
+        // First simulate the guard's movement to get potential positions
+        let mut potential_positions = std::collections::HashSet::new();
+        let mut current_pos = self.guard.position;
+        let mut current_dir = self.guard.direction;
+
+        // Get all positions the guard could potentially visit
+        loop {
+            let next_pos = match current_dir {
+                Directions::Up => Point::new(current_pos.x, current_pos.y - 1),
+                Directions::Down => Point::new(current_pos.x, current_pos.y + 1),
+                Directions::Left => Point::new(current_pos.x - 1, current_pos.y),
+                Directions::Right => Point::new(current_pos.x + 1, current_pos.y),
+            };
+
+            if !self.in_bounds(&next_pos) {
+                break;
+            }
+
+            if self.is_obstacle(&next_pos) {
+                current_dir = match current_dir {
+                    Directions::Up => Directions::Right,
+                    Directions::Right => Directions::Down,
+                    Directions::Down => Directions::Left,
+                    Directions::Left => Directions::Up,
+                };
+            } else {
+                potential_positions.insert(next_pos.clone());
+                current_pos = next_pos;
+            }
+
+            if potential_positions.len() > self.width * self.height {
+                break;
+            }
+        }
+
+        let pb = ProgressBar::new(potential_positions.len() as u64);
+
+        // Only test positions that are part of the guard's potential path
+        for test_point in potential_positions {
+            pb.inc(1);
+            if let Some(creates_loop) = self.simulate_with_obstacle(test_point) {
+                if creates_loop {
+                    count += 1;
+                }
+            }
+        }
+
+        pb.finish_with_message("done");
+        count
+    }
 }
 // Functions  =========================================================================== Functions
 pub fn response_part_1() {
     println!("Day 06 - Part 1");
+    let start = std::time::Instant::now();
 
     let mut grid: Grid = INPUT.parse().unwrap();
     let visited = grid.simulate_guard_movement();
 
+    let duration = start.elapsed();
+
+    println!("Time elapsed: {:?}", duration);
     println!("Number of distinct positions visited: {}", visited);
 }
 
 pub fn response_part_2() {
     println!("Day 06 - Part 2");
+    let start = std::time::Instant::now();
+
+    let mut grid: Grid = INPUT.parse().unwrap();
+    let loop_positions = grid.count_possible_loop_positions();
+
+    let duration = start.elapsed();
+    println!("Time elapsed: {:?}", duration);
+
+    println!(
+        "Number of possible positions for new obstacle: {}",
+        loop_positions
+    );
 }
 
 fn main() {
@@ -317,5 +454,13 @@ mod tests {
         let visited = grid.simulate_guard_movement();
 
         assert_eq!(visited, 41);
+    }
+
+    #[test]
+    fn test_example_loop_positions() {
+        let mut grid: Grid = TEST_INPUT.parse().unwrap();
+        let loop_positions = grid.count_possible_loop_positions();
+
+        assert_eq!(loop_positions, 6);
     }
 }
