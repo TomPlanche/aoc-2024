@@ -16,6 +16,9 @@ enum Directions {
     Right,
 }
 
+///
+/// # Guard
+/// Represents a guard entity that can move around the grid and maintains its movement history
 #[derive(Debug, Clone)]
 struct Guard {
     position: Point<u32>,
@@ -25,6 +28,16 @@ struct Guard {
 }
 
 impl Guard {
+    ///
+    /// # new
+    /// Creates a new Guard instance at the specified position and direction
+    ///
+    /// ## Arguments
+    /// * `position` - Starting position of the guard
+    /// * `direction` - Initial direction the guard is facing
+    ///
+    /// ## Returns
+    /// * `Guard` - A new Guard instance with initialized path history
     fn new(position: Point<u32>, direction: Directions) -> Self {
         let mut path = Vec::new();
         path.push(position.clone());
@@ -37,15 +50,9 @@ impl Guard {
         }
     }
 
-    fn turn_left(&mut self) {
-        self.direction = match self.direction {
-            Directions::Up => Directions::Left,
-            Directions::Left => Directions::Down,
-            Directions::Down => Directions::Right,
-            Directions::Right => Directions::Up,
-        };
-    }
-
+    ///
+    /// # turn_right
+    /// Rotates the guard 90 degrees clockwise
     fn turn_right(&mut self) {
         self.direction = match self.direction {
             Directions::Up => Directions::Right,
@@ -55,6 +62,9 @@ impl Guard {
         };
     }
 
+    ///
+    /// # move_forward
+    /// Moves the guard one step forward in their current direction and records the movement
     fn move_forward(&mut self) {
         let new_position = match self.direction {
             Directions::Up => Point::new(self.position.x, self.position.y - 1),
@@ -68,6 +78,12 @@ impl Guard {
         self.steps_taken += 1;
     }
 
+    ///
+    /// # get_next_position
+    /// Calculates the next position without actually moving the guard
+    ///
+    /// ## Returns
+    /// * `Point` - The position the guard would move to if they stepped forward
     fn get_next_position(&self) -> Point<u32> {
         match self.direction {
             Directions::Up => Point::new(self.position.x, self.position.y - 1),
@@ -77,6 +93,12 @@ impl Guard {
         }
     }
 
+    ///
+    /// # direction_char
+    /// Converts the guard's current direction to its character representation
+    ///
+    /// ## Returns
+    /// * `char` - ASCII character representing the guard's direction (^, v, <, >)
     fn direction_char(&self) -> char {
         match self.direction {
             Directions::Up => '^',
@@ -87,7 +109,9 @@ impl Guard {
     }
 }
 
-// And then modify the Grid struct to use Guard instead of separate position/direction:
+///
+/// # Grid
+/// Represents the game grid containing obstacles and a guard
 #[derive(Debug)]
 struct Grid {
     width: usize,
@@ -97,6 +121,17 @@ struct Grid {
 }
 
 impl Grid {
+    ///
+    /// # from_input
+    /// Creates a new Grid instance by parsing a string representation of the grid layout.
+    /// The input string should contain characters representing obstacles ('#'),
+    /// the guard ('^', 'v', '<', '>'), and empty spaces ('.').
+    ///
+    /// ## Arguments
+    /// * `input` - String containing the grid layout representation
+    ///
+    /// ## Returns
+    /// * `Grid` - A new Grid instance containing the parsed layout and guard position
     fn from_input(input: &str) -> Self {
         let mut obstacles = Vec::new();
         let mut guard_position = Point::new(0, 0);
@@ -139,7 +174,9 @@ impl Grid {
         }
     }
 
-    // Update display method to use guard
+    ///
+    /// # display
+    /// Renders the current state of the grid to stdout
     fn display(&self) {
         for y in 0..self.height {
             for x in 0..self.width {
@@ -156,11 +193,28 @@ impl Grid {
         }
     }
 
-    // Previous methods remain the same...
+    ///
+    /// # is_obstacle
+    /// Checks if a given point contains an obstacle
+    ///
+    /// ## Arguments
+    /// * `point` - The point to check for an obstacle
+    ///
+    /// ## Returns
+    /// * `bool` - true if the point contains an obstacle, false otherwise
     fn is_obstacle(&self, point: &Point<u32>) -> bool {
         self.obstacles.contains(point)
     }
 
+    ///
+    /// # in_bounds
+    /// Verifies if a point is within the grid boundaries
+    ///
+    /// ## Arguments
+    /// * `point` - The point to check
+    ///
+    /// ## Returns
+    /// * `bool` - true if the point is within bounds, false otherwise
     fn in_bounds(&self, point: &Point<u32>) -> bool {
         point.x < self.width as u32 && point.y < self.height as u32
     }
