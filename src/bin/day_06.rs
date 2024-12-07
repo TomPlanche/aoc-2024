@@ -193,16 +193,6 @@ impl Grid {
     }
 
     ///
-    /// # guard_mut
-    /// Returns a mutable reference to the guard entity
-    ///
-    /// ## Returns
-    /// * `&mut Guard` - A mutable reference to the guard entity
-    fn guard_mut(&mut self) -> &mut Guard {
-        &mut self.guard
-    }
-
-    ///
     /// # is_obstacle
     /// Checks if a given point contains an obstacle
     ///
