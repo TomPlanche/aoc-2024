@@ -1,5 +1,5 @@
 ///
-/// # day_01.rs
+/// # `day_01.rs`
 /// Code for the day 01 of the Advent of Code challenge year 2024
 ///
 // Imports  ==============================================================================  Imports
@@ -59,7 +59,7 @@ pub fn response_part_1() {
         .map(|(a, b)| (a - b).abs())
         .sum();
 
-    println!("Sum: {}", sum);
+    println!("Sum: {sum}");
 }
 
 pub fn response_part_2() {
@@ -79,7 +79,7 @@ pub fn response_part_2() {
         .map(|value| *value as u32 * right_values_count.get(value).unwrap_or(&0))
         .sum();
 
-    println!("Sum: {}", sum);
+    println!("Sum: {sum}");
 }
 
 fn main() {

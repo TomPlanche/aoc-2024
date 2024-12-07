@@ -7,141 +7,127 @@ use std::str::FromStr;
 
 // Variables  =========================================================================== Variables
 const INPUT: &str = include_str!("../../data/inputs/day_02.txt");
+const MAX_LEVEL_DIFF: i32 = 3;
 
-struct Data {
-    levels: Vec<Vec<i32>>,
+///
+/// # ReactorReport
+/// Represents a collection of reactor level readings that need to be analyzed for safety
+struct ReactorReport {
+    readings: Vec<Vec<i32>>,
 }
 
-impl FromStr for Data {
+impl FromStr for ReactorReport {
     type Err = ();
 
     ///
     /// # from_str
-    /// Parse the input string to a Data struct
+    /// Parses multiple lines of space-separated numbers into reactor level readings
     ///
     /// ## Arguments
-    /// * `s` - The input string
+    /// * `s` - Raw input string containing reactor readings
     ///
     /// ## Returns
-    /// * `Result<Self, Self::Err>` - The Data struct
+    /// * `Result<Self, Self::Err>` - Parsed reactor report or error
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut levels = Vec::new();
+        let readings = s
+            .lines()
+            .map(|line| {
+                line.split_whitespace()
+                    .map(|n| n.parse().unwrap())
+                    .collect()
+            })
+            .collect();
 
-        for line in s.lines() {
-            let values = line.split_whitespace();
-            let mut level = Vec::new();
-            for value in values {
-                level.push(value.parse().unwrap());
-            }
-            levels.push(level);
-        }
-
-        Ok(Data { levels })
+        Ok(ReactorReport { readings })
     }
 }
 
 ///
-/// # is_always_increasing
-/// Check if the levels are always increasing
+/// # is_monotonic
+/// Checks if a sequence of levels is strictly increasing or decreasing
 ///
 /// ## Arguments
-/// * `levels` - The levels to check
+/// * `levels` - Vector of reactor levels to check
 ///
 /// ## Returns
-/// * `bool` - True if the levels are always increasing
-#[inline(always)]
-fn is_always_increasing(levels: &Vec<i32>) -> bool {
-    for i in 1..levels.len() {
-        if levels[i] < levels[i - 1] {
-            return false;
-        }
-    }
-
-    true
+/// * `bool` - True if levels are monotonic
+fn is_monotonic(levels: &[i32]) -> bool {
+    let increasing = levels.windows(2).all(|w| w[1] > w[0]);
+    let decreasing = levels.windows(2).all(|w| w[1] < w[0]);
+    increasing || decreasing
 }
 
-impl Data {
-    /// # is_report_safe
-    /// Check if the report is safe
-    /// A report is safe if the difference between each level is between 1 and 3 and the levels are always increasing or decreasing.
+impl ReactorReport {
+    ///
+    /// # is_reading_safe
+    /// Determines if a single reactor reading is safe according to safety rules:
+    /// - Levels must be monotonic (all increasing or all decreasing)
+    /// - Adjacent levels must differ by 1 to 3 units
     ///
     /// ## Arguments
-    /// * `levels` - The levels to check
+    /// * `levels` - Vector of reactor levels to check
     ///
     /// ## Returns
-    /// * `bool` - True if the report is safe
-    fn is_report_safe(&self, levels: &Vec<i32>) -> bool {
-        let mut levels = levels.clone();
-
+    /// * `bool` - True if the reading is safe
+    fn is_reading_safe(&self, levels: &[i32]) -> bool {
         if levels.len() < 2 {
             return true;
         }
 
-        for i in 1..levels.len() {
-            let diff = (levels[i] - levels[i - 1]).abs();
-            if !(1..3).contains(&diff) {
-                return false;
-            }
+        // Check if differences are valid (between 1 and 3)
+        let valid_differences = levels.windows(2).all(|w| {
+            let diff = (w[1] - w[0]).abs();
+            diff <= MAX_LEVEL_DIFF // Changed: Only check upper bound
+        });
+
+        if !valid_differences {
+            return false;
         }
 
-        if !is_always_increasing(&levels) {
-            levels.reverse();
-
-            return is_always_increasing(&levels);
-        }
-
-        true
+        // Then check if sequence is monotonic
+        is_monotonic(levels)
     }
 
     ///
-    /// # is_report_safe_with_dampener
-    /// Check if the report is safe with a dampener
-    /// See if the report is safe by removing one level.
+    /// # is_reading_safe_with_dampener
+    /// Checks if a reading can be made safe by removing one level (Problem Dampener)
     ///
     /// ## Arguments
-    /// * `levels` - The levels to check
+    /// * `levels` - Vector of reactor levels to check
     ///
     /// ## Returns
-    /// * `bool` - True if the report is safe with a dampener
-    fn is_report_safe_with_dampener(&self, levels: &Vec<i32>) -> bool {
-        if self.is_report_safe(levels) {
+    /// * `bool` - True if the reading can be made safe
+    fn is_reading_safe_with_dampener(&self, levels: &[i32]) -> bool {
+        if levels.len() < 2 {
             return true;
         }
 
-        for i in 0..levels.len() {
-            let mut modified_levels = levels.clone();
-            modified_levels.remove(i);
-            if self.is_report_safe(&modified_levels) {
-                return true;
-            }
+        // Check if already safe
+        if self.is_reading_safe(levels) {
+            return true;
         }
 
-        false
+        // Try removing each element and check if resulting sequence is safe
+        (0..levels.len()).any(|i| {
+            let mut modified = levels.to_vec();
+            modified.remove(i);
+            self.is_reading_safe(&modified)
+        })
     }
 
-    ///
-    /// # count_safe_arrangements
-    /// Count the number of safe arrangements
-    ///
-    /// ## Returns
-    /// * `usize` - The number of safe arrangements
-    fn count_safe_arrangements(&self) -> usize {
-        self.levels
+    /// Count safe readings without Problem Dampener
+    fn count_safe_readings(&self) -> usize {
+        self.readings
             .iter()
-            .filter(|&report| self.is_report_safe(report))
+            .filter(|reading| self.is_reading_safe(reading))
             .count()
     }
 
-    ///
-    /// # count_safe_arrangements_with_dampener
-    /// Count the number of safe arrangements with a dampener
-    ///
-    /// ## Returns
-    /// * `usize` - The number of safe arrangements with a dampener
-    fn count_safe_arrangements_with_dampener(&self) -> usize {
-        self.levels
+    /// Count safe readings with Problem Dampener
+    fn count_safe_readings_with_dampener(&self) -> usize {
+        self.readings
             .iter()
-            .filter(|&report| self.is_report_safe_with_dampener(report))
+            .filter(|reading| self.is_reading_safe_with_dampener(reading))
             .count()
     }
 }
@@ -150,7 +136,9 @@ impl Data {
 pub fn response_part_1() {
     println!("Day 02 - Part 1");
 
-    let count = Data::from_str(INPUT).unwrap().count_safe_arrangements();
+    let count = ReactorReport::from_str(INPUT)
+        .unwrap()
+        .count_safe_readings();
 
     println!("Count: {}", count);
 }
@@ -158,9 +146,9 @@ pub fn response_part_1() {
 pub fn response_part_2() {
     println!("Day 02 - Part 2");
 
-    let count = Data::from_str(INPUT)
+    let count = ReactorReport::from_str(INPUT)
         .unwrap()
-        .count_safe_arrangements_with_dampener();
+        .count_safe_readings_with_dampener();
 
     println!("Count: {}", count);
 }
@@ -175,58 +163,88 @@ fn main() {
 mod tests {
     use super::*;
 
+    const INPUT: &str = "7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9";
+
     #[test]
     fn test_parse_input() {
         let input = "1 2 3\n4 5 6";
-        let data = Data::from_str(input).unwrap();
-        assert_eq!(data.levels, vec![vec![1, 2, 3], vec![4, 5, 6]]);
+        let data = ReactorReport::from_str(input).unwrap();
+        assert_eq!(data.readings, vec![vec![1, 2, 3], vec![4, 5, 6]]);
     }
 
     #[test]
     fn test_is_always_increasing() {
-        assert!(is_always_increasing(&vec![1, 2, 3, 4]));
-        assert!(!is_always_increasing(&vec![1, 3, 2, 4]));
-        assert!(!is_always_increasing(&vec![4, 3, 2, 1]));
+        assert!(is_monotonic(&[1, 2, 3, 4])); // increasing
+        assert!(!is_monotonic(&[1, 3, 2, 4])); // not monotonic
+        assert!(is_monotonic(&[4, 3, 2, 1])); // decreasing - should be true!
     }
 
     #[test]
-    fn test_is_report_safe() {
-        let data = Data { levels: vec![] };
+    fn test_is_reading_safe() {
+        let report = ReactorReport::from_str("1 2 3").unwrap();
 
-        // Test increasing sequence
-        assert!(data.is_report_safe(&vec![1, 2, 3, 4]));
+        // Basic increasing/decreasing sequences
+        assert!(report.is_reading_safe(&[1, 2, 3])); // Increasing, valid differences
+        assert!(report.is_reading_safe(&[3, 2, 1])); // Decreasing, valid differences
 
-        // Test decreasing sequence
-        assert!(data.is_report_safe(&vec![4, 3, 2, 1]));
+        // Invalid differences
+        assert!(!report.is_reading_safe(&[1, 5, 6])); // Too large difference (4)
 
-        // Test invalid differences
-        assert!(!data.is_report_safe(&vec![1, 4, 7]));
+        // Non-monotonic sequences
+        assert!(!report.is_reading_safe(&[1, 3, 2])); // Up then down
+        assert!(!report.is_reading_safe(&[2, 1, 3])); // Down then up
 
-        // Test single value
-        assert!(data.is_report_safe(&vec![1]));
-
-        // Test empty sequence
-        assert!(data.is_report_safe(&vec![]));
+        // Edge cases
+        assert!(report.is_reading_safe(&[1])); // Single element
+        assert!(report.is_reading_safe(&[])); // Empty sequence
+        assert!(report.is_reading_safe(&[1, 2])); // Two elements, valid difference
     }
 
     #[test]
-    fn test_is_report_safe_with_dampener() {
-        let data = Data { levels: vec![] };
+    fn test_is_reading_safe_with_dampener() {
+        let report = ReactorReport::from_str("1 2 3").unwrap();
 
-        // Already safe sequence
-        assert!(data.is_report_safe_with_dampener(&vec![1, 2, 3]));
+        // Already safe sequences
+        assert!(report.is_reading_safe_with_dampener(&[1, 2, 3])); // Already safe
+        assert!(report.is_reading_safe_with_dampener(&[3, 2, 1])); // Already safe
 
-        // Can become safe by removing middle element
-        assert!(data.is_report_safe_with_dampener(&vec![1, 5, 3]));
+        // Can be made safe by removing one element
+        assert!(report.is_reading_safe_with_dampener(&[1, 3, 2])); // Remove 3 to get [1, 2]
+        assert!(report.is_reading_safe_with_dampener(&[1, 4, 2])); // Remove 4 to get [1, 2]
+        assert!(report.is_reading_safe_with_dampener(&[5, 1, 2, 3])); // Remove 5 to get [1, 2, 3]
 
-        // Cannot become safe by removing any element
-        assert!(!data.is_report_safe_with_dampener(&vec![1, 5, 8]));
+        // Cannot be made safe by removing one element
+        assert!(!report.is_reading_safe_with_dampener(&[1, 5, 2, 6])); // Multiple issues
+        assert!(!report.is_reading_safe_with_dampener(&[1, 5, 2, 4, 3])); // Too many direction changes
+
+        // Edge cases
+        assert!(report.is_reading_safe_with_dampener(&[1])); // Single element
+        assert!(report.is_reading_safe_with_dampener(&[])); // Empty sequence
+        assert!(report.is_reading_safe_with_dampener(&[1, 2])); // Two elements
     }
 
     #[test]
     fn test_count_safe_arrangements() {
         let input = "1 2 3\n1 4 2\n1 2 5";
-        let data = Data::from_str(input).unwrap();
-        assert_eq!(data.count_safe_arrangements(), 1);
+        let data = ReactorReport::from_str(input).unwrap();
+        assert_eq!(data.count_safe_readings(), 2); // Only [1,2,3] is strictly monotonic with valid differences
+    }
+
+    #[test]
+    fn test_count_safe_arrangements_from_example() {
+        let data = ReactorReport::from_str(INPUT).unwrap();
+        assert_eq!(data.count_safe_readings(), 2);
+    }
+
+    #[test]
+    fn test_count_safe_arrangements_with_dampener() {
+        let input = "1 2 3\n1 4 2\n1 2 5";
+        let data = ReactorReport::from_str(input).unwrap();
+        assert_eq!(data.count_safe_readings_with_dampener(), 3); // Adjusted based on dampener rules
     }
 }

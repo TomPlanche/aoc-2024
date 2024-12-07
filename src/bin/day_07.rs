@@ -1,5 +1,5 @@
 ///
-/// # day_07.rs
+/// # `day_07.rs`
 /// Code for the day 07 of the Advent of Code challenge year 2024
 ///
 // Imports  ==============================================================================  Imports
@@ -18,7 +18,7 @@ impl FromStr for Equation {
     type Err = ();
 
     ///
-    /// # from_str
+    /// # `from_str`
     /// Parse a string into an Equation
     /// A line is formatted as:
     /// 21037: 9 7 18 13
@@ -34,7 +34,6 @@ impl FromStr for Equation {
             .name("numbers")
             .unwrap()
             .as_str()
-            .trim()
             .split_whitespace()
             .map(|x| x.parse().unwrap())
             .collect();
@@ -45,7 +44,7 @@ impl FromStr for Equation {
 
 impl Equation {
     ///
-    /// # is_valid
+    /// # `is_valid`
     /// Check if the equation can be solved using + and * operators
     ///
     /// ## Arguments
@@ -59,7 +58,7 @@ impl Equation {
     }
 
     ///
-    /// # concatenate
+    /// # `concatenate`
     /// Concatenate two numbers
     ///
     /// ## Arguments
@@ -78,7 +77,7 @@ impl Equation {
     }
 
     ///
-    /// # try_all_combinations
+    /// # `try_all_combinations`
     /// Recursively try all possible combinations of operators (+, *, ||)
     ///
     /// ## Arguments
@@ -113,7 +112,7 @@ impl Equation {
             return true;
         }
 
-        return if use_concatenation {
+        if use_concatenation {
             // Try concatenation
             self.try_all_combinations(
                 index + 1,
@@ -122,7 +121,7 @@ impl Equation {
             )
         } else {
             false
-        };
+        }
     }
 }
 
@@ -141,10 +140,10 @@ pub fn response_part_1() {
 
     let duration = start.elapsed();
 
-    println!("Time elapsed: {:?}", duration);
-    println!("Duration: {:?}", duration);
+    println!("Time elapsed: {duration:?}");
+    println!("Duration: {duration:?}");
 
-    println!("Result: {}", truc);
+    println!("Result: {truc}");
 }
 
 pub fn response_part_2() {
@@ -161,8 +160,8 @@ pub fn response_part_2() {
 
     let duration = start.elapsed();
 
-    println!("Result: {}", result);
-    println!("Time elapsed: {:?}", duration);
+    println!("Result: {result}");
+    println!("Time elapsed: {duration:?}");
 }
 
 fn main() {

@@ -1,5 +1,5 @@
 ///
-/// # day_03.rs
+/// # `day_03.rs`
 /// Code for the day 03 of the Advent of Code challenge year 2024
 ///
 // Imports  ==============================================================================  Imports
@@ -9,7 +9,7 @@ use std::str::FromStr;
 const INPUT: &str = include_str!("../../data/inputs/day_03.txt");
 
 ///
-/// # Instruction
+/// # `Instruction`
 /// Represents different types of instructions that can be found in the corrupted memory
 ///
 #[derive(Debug)]
@@ -20,7 +20,7 @@ enum Instruction {
 }
 
 ///
-/// # Program
+/// # `Program`
 /// Represents the parsed program with its sequence of instructions
 ///
 #[derive(Debug)]
@@ -32,7 +32,7 @@ impl FromStr for Program {
     type Err = ();
 
     ///
-    /// # from_str
+    /// # `from_str`
     /// Parses the input string to extract valid instructions
     ///
     /// ## Arguments
@@ -98,7 +98,7 @@ pub fn response_part_1() {
         })
         .sum();
 
-    println!("The sum of all multiplications is: {}", sum);
+    println!("The sum of all multiplications is: {sum}");
 }
 
 pub fn response_part_2() {
@@ -117,7 +117,7 @@ pub fn response_part_2() {
         }
     }
 
-    println!("The sum of all multiplications is: {}", sum);
+    println!("The sum of all multiplications is: {sum}");
 }
 
 fn main() {

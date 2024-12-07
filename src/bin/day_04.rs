@@ -1,5 +1,5 @@
 ///
-/// # day_04.rs
+/// # `day_04.rs`
 /// Code for the day 04 of the Advent of Code challenge year 2024
 ///
 /// Algorithm Description:
@@ -63,7 +63,11 @@ impl FromStr for Grid {
 
 impl Grid {
     fn get_char(&self, row: i32, col: i32) -> Option<char> {
-        if row >= 0 && col >= 0 && row < self.height as i32 && col < self.width as i32 {
+        if row >= 0
+            && col >= 0
+            && row < i32::try_from(self.height).unwrap()
+            && col < i32::try_from(self.width).unwrap()
+        {
             self.data[row as usize].chars().nth(col as usize)
         } else {
             None
@@ -78,8 +82,10 @@ impl Grid {
         target: &str,
     ) -> bool {
         target.chars().enumerate().all(|(i, target_char)| {
-            let new_row = row as i32 + direction.row_delta * i as i32;
-            let new_col = col as i32 + direction.col_delta * i as i32;
+            let new_row =
+                i32::try_from(row).unwrap() + direction.row_delta * i32::try_from(i).unwrap();
+            let new_col =
+                i32::try_from(col).unwrap() + direction.col_delta * i32::try_from(i).unwrap();
 
             self.get_char(new_row, new_col)
                 .map_or(false, |c| c == target_char)
@@ -140,7 +146,9 @@ impl Grid {
 
         for row in 1..self.height - 1 {
             for col in 1..self.width - 1 {
-                if self.get_char(row as i32, col as i32) != Some('A') {
+                if self.get_char(i32::try_from(row).unwrap(), i32::try_from(col).unwrap())
+                    != Some('A')
+                {
                     continue;
                 }
 
@@ -153,7 +161,10 @@ impl Grid {
 
                 let chars: Vec<u32> = corners
                     .iter()
-                    .filter_map(|&(r, c)| self.get_char(r as i32, c as i32).map(|ch| ch as u32))
+                    .filter_map(|&(r, c)| {
+                        self.get_char(i32::try_from(r).unwrap(), i32::try_from(c).unwrap())
+                            .map(u32::from)
+                    })
                     .collect();
 
                 if chars.len() == 4
@@ -173,14 +184,14 @@ pub fn response_part_1() {
     println!("Day 04 - Part 1");
     let grid: Grid = INPUT.parse().unwrap();
     let result = grid.count_xmas_occurrences();
-    println!("Number of XMAS occurrences: {}", result);
+    println!("Number of XMAS occurrences: {result}");
 }
 
 pub fn response_part_2() {
     println!("Day 04 - Part 2");
     let grid: Grid = INPUT.parse().unwrap();
     let result = grid.count_x_mas_patterns();
-    println!("Number of X-MAS patterns: {}", result);
+    println!("Number of X-MAS patterns: {result}");
 }
 
 fn main() {

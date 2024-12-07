@@ -1,5 +1,5 @@
 ///
-/// # day_05.rs
+/// # `day_05.rs`
 /// Code for day 05 of Advent of Code 2024: Print Queue page ordering verification
 ///
 // Imports  ==============================================================================  Imports
@@ -134,7 +134,7 @@ pub fn response_part_1() {
     println!("Day 05 - Part 1");
     let queue: PrintQueue = INPUT.parse().unwrap();
     let middle_sum: i32 = queue.get_middle_pages().iter().sum();
-    println!("Sum of middle pages from valid updates: {}", middle_sum);
+    println!("Sum of middle pages from valid updates: {middle_sum}");
 }
 
 pub fn response_part_2() {
@@ -142,10 +142,7 @@ pub fn response_part_2() {
 
     let queue: PrintQueue = INPUT.parse().unwrap();
     let middle_sum: i32 = queue.get_middle_pages_fixed().iter().sum();
-    println!(
-        "Sum of middle pages from reordered invalid updates: {}",
-        middle_sum
-    );
+    println!("Sum of middle pages from reordered invalid updates: {middle_sum}");
 }
 
 fn main() {
@@ -172,14 +169,14 @@ mod tests {
     fn test_valid_update() {
         let input = "47|53\n47|61\n47|29\n\n75,47,61,53,29";
         let queue: PrintQueue = input.parse().unwrap();
-        assert!(queue.is_valid_update(&vec![75, 47, 61, 53, 29]));
+        assert!(queue.is_valid_update(&[75, 47, 61, 53, 29]));
     }
 
     #[test]
     fn test_invalid_update() {
         let input = "97|75\n\n75,97,47,61,53";
         let queue: PrintQueue = input.parse().unwrap();
-        assert!(!queue.is_valid_update(&vec![75, 97, 47, 61, 53]));
+        assert!(!queue.is_valid_update(&[75, 97, 47, 61, 53]));
     }
 
     #[test]
@@ -194,7 +191,7 @@ mod tests {
     fn test_order_update() {
         let input = "97|75\n75|47\n47|61\n61|53\n\n75,97,47,61,53";
         let queue: PrintQueue = input.parse().unwrap();
-        let ordered = queue.order_update(&vec![75, 97, 47, 61, 53]);
+        let ordered = queue.order_update(&[75, 97, 47, 61, 53]);
         assert_eq!(ordered, vec![97, 75, 47, 61, 53]);
     }
 }

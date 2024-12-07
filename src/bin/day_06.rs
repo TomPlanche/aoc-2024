@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 ///
-/// # day_06.rs
+/// # `day_06.rs`
 /// Code for the day 06 of the Advent of Code challenge year 2024
 ///
 // Imports  ==============================================================================  Imports
@@ -20,7 +20,7 @@ enum Directions {
 }
 
 ///
-/// # Guard
+/// # `Guard`
 /// Represents a guard entity that can move around the grid and maintains its movement history
 #[derive(Debug, Clone)]
 struct Guard {
@@ -32,7 +32,7 @@ struct Guard {
 
 impl Guard {
     ///
-    /// # new
+    /// # `new`
     /// Creates a new Guard instance at the specified position and direction
     ///
     /// ## Arguments
@@ -42,8 +42,7 @@ impl Guard {
     /// ## Returns
     /// * `Guard` - A new Guard instance with initialized path history
     fn new(position: Point<i32>, direction: Directions) -> Self {
-        let mut path = Vec::new();
-        path.push(position.clone());
+        let path = vec![position];
 
         Guard {
             position,
@@ -54,7 +53,7 @@ impl Guard {
     }
 
     ///
-    /// # direction_char
+    /// # `direction_char`
     /// Returns the character representation of the guard's current direction
     ///
     /// ## Returns
@@ -69,7 +68,7 @@ impl Guard {
     }
 
     ///
-    /// # turn_right
+    /// # `turn_right`
     /// Rotates the guard 90 degrees clockwise
     fn turn_right(&mut self) {
         self.direction = match self.direction {
@@ -81,7 +80,7 @@ impl Guard {
     }
 
     ///
-    /// # move_forward
+    /// # `move_forward`
     /// Moves the guard one step forward in their current direction and records the movement
     fn move_forward(&mut self) {
         let new_position = match self.direction {
@@ -92,12 +91,12 @@ impl Guard {
         };
 
         self.position = new_position;
-        self.path.push(self.position.clone());
+        self.path.push(self.position);
         self.steps_taken += 1;
     }
 
     ///
-    /// # get_next_position
+    /// # `get_next_position`
     /// Calculates the next position without actually moving the guard
     ///
     /// ## Returns
@@ -113,7 +112,7 @@ impl Guard {
 }
 
 ///
-/// # Grid
+/// # `Grid`
 /// Represents the game grid containing obstacles and a guard
 #[derive(Debug)]
 struct Grid {
@@ -139,7 +138,7 @@ impl FromStr for Grid {
             width = line.len();
 
             for (x, c) in line.chars().enumerate() {
-                let p = Point::new(x as i32, y as i32);
+                let p = Point::new(i32::try_from(x).unwrap(), i32::try_from(y).unwrap());
                 match c {
                     '#' => obstacles.push(p),
                     '^' => {
@@ -174,15 +173,15 @@ impl FromStr for Grid {
 
 impl Grid {
     ///
-    /// # display
+    /// # `display`
     /// Renders the current state of the grid to stdout
     fn display(&self) {
         for y in 0..self.height {
             for x in 0..self.width {
-                let p = Point::new(x as i32, y as i32);
+                let p = Point::new(i32::try_from(x).unwrap(), i32::try_from(y).unwrap());
                 if p == self.guard.position {
                     print!("{}", self.guard.direction_char());
-                } else if self.is_obstacle(&p) {
+                } else if self.is_obstacle(p) {
                     print!("#");
                 } else {
                     print!(".");
@@ -193,7 +192,7 @@ impl Grid {
     }
 
     ///
-    /// # is_obstacle
+    /// # `is_obstacle`
     /// Checks if a given point contains an obstacle
     ///
     /// ## Arguments
@@ -201,12 +200,12 @@ impl Grid {
     ///
     /// ## Returns
     /// * `bool` - true if the point contains an obstacle, false otherwise
-    fn is_obstacle(&self, point: &Point<i32>) -> bool {
-        self.obstacles.contains(point)
+    fn is_obstacle(&self, point: Point<i32>) -> bool {
+        self.obstacles.contains(&point)
     }
 
     ///
-    /// # in_bounds
+    /// # `in_bounds`
     /// Verifies if a point is within the grid boundaries
     ///
     /// ## Arguments
@@ -214,12 +213,13 @@ impl Grid {
     ///
     /// ## Returns
     /// * `bool` - true if the point is within bounds, false otherwise
-    fn in_bounds(&self, point: &Point<i32>) -> bool {
-        point.x < self.width as i32 && point.y < self.height as i32
+    fn in_bounds(&self, point: Point<i32>) -> bool {
+        point.x < i32::try_from(self.width).unwrap()
+            && point.y < i32::try_from(self.height).unwrap()
     }
 
     ///
-    /// # can_move_to
+    /// # `can_move_to`
     /// Checks if a point is within bounds and not an obstacle
     ///
     /// ## Arguments
@@ -227,31 +227,31 @@ impl Grid {
     ///
     /// ## Returns
     /// * `bool` - true if the point is within bounds and not an obstacle, false otherwise
-    fn can_move_to(&self, point: &Point<i32>) -> bool {
+    fn can_move_to(&self, point: Point<i32>) -> bool {
         self.in_bounds(point) && !self.is_obstacle(point)
     }
 
     ///
-    /// # simulate_guard_movement
+    /// # `simulate_guard_movement`
     /// Simulates the guard's movement until it leaves the mapped area
     ///
     /// ## Returns
     /// * `usize` - The number of distinct positions visited by the guard
     fn simulate_guard_movement(&mut self) -> usize {
         let mut visited = std::collections::HashSet::new();
-        visited.insert(self.guard.position.clone());
+        visited.insert(self.guard.position);
 
         loop {
             let next_position = self.guard.get_next_position();
 
             // Check if guard would leave the mapped area
-            if !self.in_bounds(&next_position) {
+            if !self.in_bounds(next_position) {
                 break;
             }
 
-            if self.can_move_to(&next_position) {
+            if self.can_move_to(next_position) {
                 self.guard.move_forward();
-                visited.insert(self.guard.position.clone());
+                visited.insert(self.guard.position);
             } else {
                 self.guard.turn_right();
             }
@@ -267,7 +267,7 @@ impl Grid {
     }
 
     ///
-    /// # simulate_with_obstacle
+    /// # `simulate_with_obstacle`
     /// Simulates the guard's movement with an additional obstacle and checks if it creates a loop.
     ///
     /// ## Arguments
@@ -276,7 +276,7 @@ impl Grid {
     /// ## Returns
     /// * `Option<bool>` - Some(true) if the obstacle creates a loop, Some(false) if it doesn't, None if the obstacle is invalid
     fn simulate_with_obstacle(&mut self, obstacle: Point<i32>) -> Option<bool> {
-        if obstacle == self.guard.position || self.is_obstacle(&obstacle) {
+        if obstacle == self.guard.position || self.is_obstacle(obstacle) {
             return None;
         }
 
@@ -289,7 +289,7 @@ impl Grid {
 
         loop {
             // Create a unique state representation
-            let state = (current_pos.clone(), current_dir);
+            let state = (current_pos, current_dir);
             if !visited_states.insert(state) {
                 // Found a loop
                 return Some(true);
@@ -303,7 +303,7 @@ impl Grid {
             };
 
             // Check if out of bounds
-            if !self.in_bounds(&next_pos) {
+            if !self.in_bounds(next_pos) {
                 return Some(false);
             }
 
@@ -327,7 +327,7 @@ impl Grid {
     }
 
     ///
-    /// # count_possible_loop_positions
+    /// # `count_possible_loop_positions`
     /// Counts the number of possible loop positions that can be added to the grid
     ///
     /// ## Returns
@@ -349,11 +349,11 @@ impl Grid {
                 Directions::Right => Point::new(current_pos.x + 1, current_pos.y),
             };
 
-            if !self.in_bounds(&next_pos) {
+            if !self.in_bounds(next_pos) {
                 break;
             }
 
-            if self.is_obstacle(&next_pos) {
+            if self.is_obstacle(next_pos) {
                 current_dir = match current_dir {
                     Directions::Up => Directions::Right,
                     Directions::Right => Directions::Down,
@@ -361,7 +361,7 @@ impl Grid {
                     Directions::Left => Directions::Up,
                 };
             } else {
-                potential_positions.insert(next_pos.clone());
+                potential_positions.insert(next_pos);
                 current_pos = next_pos;
             }
 
@@ -396,8 +396,10 @@ pub fn response_part_1() {
 
     let duration = start.elapsed();
 
-    println!("Time elapsed: {:?}", duration);
-    println!("Number of distinct positions visited: {}", visited);
+    grid.display();
+
+    println!("Time elapsed: {duration:?}");
+    println!("Number of distinct positions visited: {visited}");
 }
 
 pub fn response_part_2() {
@@ -408,12 +410,9 @@ pub fn response_part_2() {
     let loop_positions = grid.count_possible_loop_positions();
 
     let duration = start.elapsed();
-    println!("Time elapsed: {:?}", duration);
+    println!("Time elapsed: {duration:?}");
 
-    println!(
-        "Number of possible positions for new obstacle: {}",
-        loop_positions
-    );
+    println!("Number of possible positions for new obstacle: {loop_positions}");
 }
 
 fn main() {
@@ -442,6 +441,8 @@ mod tests {
     fn test_example_distinct_positions() {
         let mut grid: Grid = TEST_INPUT.parse().unwrap();
         let visited = grid.simulate_guard_movement();
+
+        grid.display();
 
         assert_eq!(visited, 41);
     }
