@@ -132,17 +132,30 @@ const INPUT: &str = include_str!("../../data/inputs/day_05.txt");
 
 pub fn response_part_1() {
     println!("Day 05 - Part 1");
+
+    let start = std::time::Instant::now();
+
     let queue: PrintQueue = INPUT.parse().unwrap();
     let middle_sum: i32 = queue.get_middle_pages().iter().sum();
+
+    let duration = start.elapsed();
+
     println!("Sum of middle pages from valid updates: {middle_sum}");
+    println!("Duration: {duration:?}\n");
 }
 
 pub fn response_part_2() {
     println!("Day 05 - Part 2");
 
+    let start = std::time::Instant::now();
+
     let queue: PrintQueue = INPUT.parse().unwrap();
     let middle_sum: i32 = queue.get_middle_pages_fixed().iter().sum();
+
+    let duration = start.elapsed();
+
     println!("Sum of middle pages from reordered invalid updates: {middle_sum}");
+    println!("Duration: {duration:?}");
 }
 
 fn main() {

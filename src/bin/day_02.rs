@@ -136,21 +136,31 @@ impl ReactorReport {
 pub fn response_part_1() {
     println!("Day 02 - Part 1");
 
+    let start = std::time::Instant::now();
+
     let count = ReactorReport::from_str(INPUT)
         .unwrap()
         .count_safe_readings();
 
+    let duration = start.elapsed();
+
     println!("Count: {}", count);
+    println!("Duration: {duration:?}\n");
 }
 
 pub fn response_part_2() {
     println!("Day 02 - Part 2");
 
+    let start = std::time::Instant::now();
+
     let count = ReactorReport::from_str(INPUT)
         .unwrap()
         .count_safe_readings_with_dampener();
 
+    let duration = start.elapsed();
+
     println!("Count: {}", count);
+    println!("Duration: {duration:?}");
 }
 
 fn main() {

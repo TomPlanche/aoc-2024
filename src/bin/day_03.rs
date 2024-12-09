@@ -87,6 +87,8 @@ impl FromStr for Program {
 pub fn response_part_1() {
     println!("Day 03 - Part 1");
 
+    let start = std::time::Instant::now();
+
     let sum: usize = INPUT
         .parse::<Program>()
         .unwrap()
@@ -98,11 +100,16 @@ pub fn response_part_1() {
         })
         .sum();
 
+    let duration = start.elapsed();
+
     println!("The sum of all multiplications is: {sum}");
+    println!("Duration: {duration:?}\n");
 }
 
 pub fn response_part_2() {
     println!("Day 03 - Part 2");
+
+    let start = std::time::Instant::now();
 
     let program = INPUT.parse::<Program>().unwrap();
     let mut enabled = true;
@@ -117,7 +124,10 @@ pub fn response_part_2() {
         }
     }
 
+    let duration = start.elapsed();
+
     println!("The sum of all multiplications is: {sum}");
+    println!("Duration: {duration:?}");
 }
 
 fn main() {

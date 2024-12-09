@@ -182,16 +182,30 @@ impl Grid {
 // Functions  =========================================================================== Functions
 pub fn response_part_1() {
     println!("Day 04 - Part 1");
+
+    let start = std::time::Instant::now();
+
     let grid: Grid = INPUT.parse().unwrap();
     let result = grid.count_xmas_occurrences();
+
+    let duration = start.elapsed();
+
     println!("Number of XMAS occurrences: {result}");
+    println!("Duration: {duration:?}\n");
 }
 
 pub fn response_part_2() {
     println!("Day 04 - Part 2");
+
+    let start = std::time::Instant::now();
+
     let grid: Grid = INPUT.parse().unwrap();
     let result = grid.count_x_mas_patterns();
+
+    let duration = start.elapsed();
+
     println!("Number of X-MAS patterns: {result}");
+    println!("Duration: {duration:?}");
 }
 
 fn main() {

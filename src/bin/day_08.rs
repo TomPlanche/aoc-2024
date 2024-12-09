@@ -215,7 +215,7 @@ pub fn response_part_1() {
     let duration = start.elapsed();
 
     println!("Found {count} antinodes");
-    println!("Duration: {duration:?}");
+    println!("Duration: {duration:?}\n");
 }
 
 pub fn response_part_2() {
@@ -227,8 +227,9 @@ pub fn response_part_2() {
     let count = antinodes.len();
 
     let duration = start.elapsed();
+
     println!("Found {count} antinodes with harmonics");
-    println!("Time elapsed: {duration:?}");
+    println!("Duration: {duration:?}");
 }
 
 fn main() {

@@ -46,6 +46,8 @@ impl FromStr for Data {
 pub fn response_part_1() {
     println!("Day 01 - Part 1");
 
+    let start = std::time::Instant::now();
+
     let data: Data = INPUT.parse().unwrap();
     let mut left_values = data.left_values;
     let mut right_values = data.right_values;
@@ -59,11 +61,16 @@ pub fn response_part_1() {
         .map(|(a, b)| (a - b).abs())
         .sum();
 
+    let duration = start.elapsed();
+
     println!("Sum: {sum}");
+    println!("Duration: {duration:?}\n");
 }
 
 pub fn response_part_2() {
     println!("Day 01 - Part 2");
+
+    let start = std::time::Instant::now();
 
     let data: Data = INPUT.parse().unwrap();
     let left_values = data.left_values;
@@ -79,7 +86,10 @@ pub fn response_part_2() {
         .map(|value| *value as u32 * right_values_count.get(value).unwrap_or(&0))
         .sum();
 
+    let duration = start.elapsed();
+
     println!("Sum: {sum}");
+    println!("Duration: {duration:?}");
 }
 
 fn main() {

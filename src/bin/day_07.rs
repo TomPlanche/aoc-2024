@@ -140,10 +140,8 @@ pub fn response_part_1() {
 
     let duration = start.elapsed();
 
-    println!("Time elapsed: {duration:?}");
-    println!("Duration: {duration:?}");
-
     println!("Result: {truc}");
+    println!("Duration: {duration:?}\n");
 }
 
 pub fn response_part_2() {
@@ -161,7 +159,7 @@ pub fn response_part_2() {
     let duration = start.elapsed();
 
     println!("Result: {result}");
-    println!("Time elapsed: {duration:?}");
+    println!("Duration: {duration:?}");
 }
 
 fn main() {

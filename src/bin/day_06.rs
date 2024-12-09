@@ -58,6 +58,7 @@ impl Guard {
     ///
     /// ## Returns
     /// * `char` - The character representing the guard's direction
+    #[allow(dead_code)]
     fn direction_char(&self) -> char {
         match self.direction {
             Directions::Up => '^',
@@ -175,6 +176,7 @@ impl Grid {
     ///
     /// # `display`
     /// Renders the current state of the grid to stdout
+    #[allow(dead_code)]
     fn display(&self) {
         for y in 0..self.height {
             for x in 0..self.width {
@@ -396,10 +398,8 @@ pub fn response_part_1() {
 
     let duration = start.elapsed();
 
-    grid.display();
-
-    println!("Time elapsed: {duration:?}");
     println!("Number of distinct positions visited: {visited}");
+    println!("Duration: {duration:?}\n");
 }
 
 pub fn response_part_2() {
@@ -410,9 +410,9 @@ pub fn response_part_2() {
     let loop_positions = grid.count_possible_loop_positions();
 
     let duration = start.elapsed();
-    println!("Time elapsed: {duration:?}");
 
     println!("Number of possible positions for new obstacle: {loop_positions}");
+    println!("Duration: {duration:?}");
 }
 
 fn main() {
