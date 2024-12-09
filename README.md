@@ -1,4 +1,3 @@
-
 # Advent of Code 2024
 ```
         .
@@ -20,15 +19,16 @@ This repository contains my solutions to the [Advent of Code 2024](https://adven
 ## Solutions
 | Day | Part 1 | Part 2 |
 |-----|--------|--------|
-| [Day 1](src/bin/day_01.rs) | 68.375µs | 78.333µs |
-| [Day 2](src/bin/day_02.rs) | 176.541µs | 371.666µs |
-| [Day 3](src/bin/day_03.rs) | 2.400917ms | 3.335458ms |
-| [Day 4](src/bin/day_04.rs) | 6.48275ms | 1.396709ms |
-| [Day 5](src/bin/day_05.rs) | 4.281167ms | 15.094ms |
-| [Day 6](src/bin/day_06.rs) | 2.106666ms | 30.646914917s |
-| [Day 7](src/bin/day_07.rs) | 72.25425ms | 638.079083ms |
-| [Day 8](src/bin/day_08.rs) | 42.917µs | 80.25µs |
-| [Day 9](src/bin/day_09.rs) | 614.292µs | 482.333µs |
+| [Day 1](src/bin/day_01.rs) | 62.79µs | 79.17µs |
+| [Day 2](src/bin/day_02.rs) | 176.54µs | 371.67µs |
+| [Day 3](src/bin/day_03.rs) | 2.40ms | 3.34ms |
+| [Day 4](src/bin/day_04.rs) | 6.48ms | 1.40ms |
+| [Day 5](src/bin/day_05.rs) | 4.01ms | 17.74ms |
+| [Day 6](src/bin/day_06.rs) | 2.11ms | 30.65s |
+| [Day 7](src/bin/day_07.rs) | 72.25ms | 638.08ms |
+| [Day 8](src/bin/day_08.rs) | 42.92µs | 80.25µs |
+| [Day 9](src/bin/day_09.rs) | 614.29µs | 482.33µs |
+
 
 ## Running the Solutions
 
