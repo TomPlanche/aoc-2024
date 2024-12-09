@@ -259,6 +259,7 @@ mod tests {
     #[test]
     fn test_parse_map() {
         let map: AntennaMap = TEST_INPUT.parse().unwrap();
+
         assert_eq!(map.width, 12);
         assert_eq!(map.height, 12);
         assert_eq!(map.antennas.len(), 7); // 4 zeros and 3 A's
@@ -268,6 +269,7 @@ mod tests {
     fn test_find_antinodes() {
         let map: AntennaMap = TEST_INPUT.parse().unwrap();
         let antinodes = map.find_antinodes();
+
         assert_eq!(antinodes.len(), 14);
     }
 
@@ -275,6 +277,7 @@ mod tests {
     fn test_find_antinodes_with_harmonics() {
         let map: AntennaMap = TEST_INPUT.parse().unwrap();
         let antinodes = map.find_antinodes_with_harmonics();
+
         assert_eq!(antinodes.len(), 34);
     }
 }

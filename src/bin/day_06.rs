@@ -388,6 +388,7 @@ impl Grid {
         count
     }
 }
+
 // Functions  =========================================================================== Functions
 pub fn response_part_1() {
     println!("Day 06 - Part 1");

@@ -172,6 +172,7 @@ mod tests {
     fn test_parse_input() {
         let input = "47|53\n97|13\n\n75,47,61,53,29\n97,61,53,29,13";
         let queue: PrintQueue = input.parse().unwrap();
+
         assert_eq!(queue.rules.len(), 2);
         assert_eq!(queue.updates.len(), 2);
         assert_eq!(queue.rules[0].before, 47);
@@ -182,6 +183,7 @@ mod tests {
     fn test_valid_update() {
         let input = "47|53\n47|61\n47|29\n\n75,47,61,53,29";
         let queue: PrintQueue = input.parse().unwrap();
+
         assert!(queue.is_valid_update(&[75, 47, 61, 53, 29]));
     }
 
@@ -189,6 +191,7 @@ mod tests {
     fn test_invalid_update() {
         let input = "97|75\n\n75,97,47,61,53";
         let queue: PrintQueue = input.parse().unwrap();
+
         assert!(!queue.is_valid_update(&[75, 97, 47, 61, 53]));
     }
 
@@ -197,6 +200,7 @@ mod tests {
         let input = "47|53\n97|13\n\n75,47,61,53,29\n97,61,53,29,13\n75,29,13";
         let queue: PrintQueue = input.parse().unwrap();
         let middle_pages = queue.get_middle_pages();
+
         assert_eq!(middle_pages, vec![61, 53, 29]);
     }
 
@@ -205,6 +209,7 @@ mod tests {
         let input = "97|75\n75|47\n47|61\n61|53\n\n75,97,47,61,53";
         let queue: PrintQueue = input.parse().unwrap();
         let ordered = queue.order_update(&[75, 97, 47, 61, 53]);
+
         assert_eq!(ordered, vec![97, 75, 47, 61, 53]);
     }
 }

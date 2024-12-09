@@ -54,6 +54,7 @@ impl FromStr for ReactorReport {
 fn is_monotonic(levels: &[i32]) -> bool {
     let increasing = levels.windows(2).all(|w| w[1] > w[0]);
     let decreasing = levels.windows(2).all(|w| w[1] < w[0]);
+
     increasing || decreasing
 }
 
@@ -184,6 +185,7 @@ mod tests {
     fn test_parse_input() {
         let input = "1 2 3\n4 5 6";
         let data = ReactorReport::from_str(input).unwrap();
+
         assert_eq!(data.readings, vec![vec![1, 2, 3], vec![4, 5, 6]]);
     }
 
@@ -242,12 +244,14 @@ mod tests {
     fn test_count_safe_arrangements() {
         let input = "1 2 3\n1 4 2\n1 2 5";
         let data = ReactorReport::from_str(input).unwrap();
+
         assert_eq!(data.count_safe_readings(), 2); // Only [1,2,3] is strictly monotonic with valid differences
     }
 
     #[test]
     fn test_count_safe_arrangements_from_example() {
         let data = ReactorReport::from_str(INPUT).unwrap();
+
         assert_eq!(data.count_safe_readings(), 2);
     }
 
@@ -255,6 +259,7 @@ mod tests {
     fn test_count_safe_arrangements_with_dampener() {
         let input = "1 2 3\n1 4 2\n1 2 5";
         let data = ReactorReport::from_str(input).unwrap();
+
         assert_eq!(data.count_safe_readings_with_dampener(), 3); // Adjusted based on dampener rules
     }
 }

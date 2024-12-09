@@ -215,9 +215,11 @@ mod tests {
     #[test]
     fn test_equation_validity() {
         let equation: Equation = "190: 10 19".parse().unwrap();
+
         assert!(equation.is_valid(false));
 
         let equation: Equation = "83: 17 5".parse().unwrap();
+
         assert!(!equation.is_valid(false));
     }
 
@@ -241,12 +243,15 @@ mod tests {
     #[test]
     fn test_concatenation() {
         let equation: Equation = "156: 15 6".parse().unwrap();
+
         assert!(equation.is_valid(true));
 
         let equation: Equation = "7290: 6 8 6 15".parse().unwrap();
+
         assert!(equation.is_valid(true));
 
         let equation: Equation = "192: 17 8 14".parse().unwrap();
+
         assert!(equation.is_valid(true));
     }
 

@@ -106,6 +106,7 @@ mod tests {
     fn test_parse_basic_input() {
         let input = "15244   50562\n81245   49036";
         let data = input.parse::<Data>().unwrap();
+
         assert_eq!(data.left_values, vec![15244, 81245]);
         assert_eq!(data.right_values, vec![50562, 49036]);
     }
@@ -114,6 +115,7 @@ mod tests {
     fn test_parse_with_variable_spacing() {
         let input = "123     456\n789   101112";
         let data = input.parse::<Data>().unwrap();
+
         assert_eq!(data.left_values, vec![123, 789]);
         assert_eq!(data.right_values, vec![456, 101112]);
     }
@@ -179,6 +181,7 @@ mod tests {
     fn test_empty_input() {
         let input = "";
         let data = input.parse::<Data>().unwrap();
+
         assert!(data.left_values.is_empty());
         assert!(data.right_values.is_empty());
     }

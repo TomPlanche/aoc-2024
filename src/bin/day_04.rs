@@ -138,6 +138,7 @@ impl Grid {
                 }
             }
         }
+
         count
     }
 
@@ -231,6 +232,7 @@ XMASAMXAMM";
     #[test]
     fn test_grid_creation() {
         let grid = create_test_grid();
+
         assert_eq!(grid.height, 5);
         assert_eq!(grid.width, 10);
     }
@@ -238,6 +240,7 @@ XMASAMXAMM";
     #[test]
     fn test_get_char() {
         let grid = create_test_grid();
+
         assert_eq!(grid.get_char(0, 0), Some('M'));
         assert_eq!(grid.get_char(-1, 0), None);
         assert_eq!(grid.get_char(0, 10), None);
@@ -246,6 +249,7 @@ XMASAMXAMM";
     #[test]
     fn test_xmas_occurrences() {
         let grid = create_test_grid();
+
         assert!(grid.count_xmas_occurrences() > 0);
     }
 
@@ -256,6 +260,7 @@ M.S
 .A.
 M.S";
         let grid: Grid = input.parse().unwrap();
+
         assert_eq!(grid.count_x_mas_patterns(), 1);
     }
 }

@@ -210,6 +210,7 @@ mod tests {
     #[test]
     fn test_disk_from_dummy_str() {
         let disk = DUMMT_INPUT.parse::<Disk>().unwrap();
+
         assert_eq!(disk.blocks.len(), 15);
         assert_eq!(disk.files.len(), 3);
     }
@@ -217,6 +218,7 @@ mod tests {
     #[test]
     fn test_disk_from_example_str() {
         let disk = EXAMPLE_INPUT.parse::<Disk>().unwrap();
+
         assert_eq!(disk.blocks.len(), 42);
         assert_eq!(disk.files.len(), 10);
     }

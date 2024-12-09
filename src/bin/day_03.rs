@@ -173,6 +173,7 @@ mod tests {
     fn test_mixed_instructions() {
         let input = "mul(4,5)do()mul(2,3)don't()mul(6,7)";
         let program = input.parse::<Program>().unwrap();
+
         assert_eq!(program.instructions.len(), 5);
     }
 
@@ -180,6 +181,7 @@ mod tests {
     fn test_ignore_invalid_text() {
         let input = "hello mul(1,2) world do() test";
         let program = input.parse::<Program>().unwrap();
+
         assert_eq!(program.instructions.len(), 2);
     }
 
@@ -195,6 +197,7 @@ mod tests {
                 _ => None,
             })
             .sum();
+
         assert_eq!(sum, 6 + 20 + 9);
     }
 
@@ -213,6 +216,7 @@ mod tests {
                 _ => {}
             }
         }
+
         assert_eq!(sum, 6 + 9); // 4*5 is skipped due to don't()
     }
 }
