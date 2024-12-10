@@ -65,9 +65,7 @@ impl HeightMap {
     /// * `usize` - The score of the trailhead.
     fn calculate_trailhead_score(&self, start: (usize, usize)) -> usize {
         let mut visited = HashSet::new();
-        let mut reachable_nines = HashSet::new();
-
-        self.dfs(start, &mut visited, &mut reachable_nines, 0);
+        let (_, reachable_nines) = self.traverse_paths(start, &mut visited, 0);
 
         reachable_nines.len()
     }
@@ -84,126 +82,110 @@ impl HeightMap {
     /// * `usize` - The rating of the trailhead.
     fn calculate_trailhead_rating(&self, start: (usize, usize)) -> usize {
         let mut visited = HashSet::new();
-        self.count_paths(start, &mut visited, 0)
-    }
-
-    ///
-    /// # `count_paths`
-    /// Count the number of paths that can be taken from a trailhead.
-    ///
-    /// ## Arguments
-    /// * `pos` - The current position.
-    /// * `visited` - The set of visited positions.
-    /// * `current_height` - The current height.
-    ///
-    /// ## Returns
-    /// * `usize` - The number of paths that can be taken.
-    fn count_paths(
-        &self,
-        pos: (usize, usize),
-        visited: &mut HashSet<(usize, usize)>,
-        current_height: u32,
-    ) -> usize {
-        if visited.contains(&pos) {
-            return 0;
-        }
-
-        let (x, y) = pos;
-        let height = self.heights[y][x];
-
-        if height != current_height {
-            return 0;
-        }
-
-        if height == 9 {
-            return 1; // Found a valid path
-        }
-
-        visited.insert(pos);
-
-        let mut paths = 0;
-        let directions = [(0, 1), (1, 0), (0, -1), (-1, 0)];
-
-        for (dx, dy) in directions {
-            let new_x = x as i32 + dx;
-            let new_y = y as i32 + dy;
-
-            if new_x >= 0 && new_x < self.width as i32 && new_y >= 0 && new_y < self.height as i32 {
-                let next_pos = (new_x as usize, new_y as usize);
-                let next_height = self.heights[next_pos.1][next_pos.0];
-
-                if next_height == height + 1 {
-                    paths += self.count_paths(next_pos, &mut visited.clone(), height + 1);
-                }
-            }
-        }
+        let (paths, _) = self.traverse_paths(start, &mut visited, 0);
 
         paths
     }
 
     ///
-    /// # `dfs`
-    /// Depth First Search to find all the reachable nines.
+    /// # `traverse_paths`
+    /// Traverses all possible paths from a starting position, counting valid paths and collecting reachable height-9 positions.
+    ///
+    /// ## Algorithm: Depth-First Search with Path Tracking
+    /// This function implements a modified DFS algorithm that simultaneously:
+    /// 1. Counts unique valid paths to height-9 positions
+    /// 2. Collects all reachable height-9 positions
+    ///
+    /// ### Key Characteristics:
+    /// - Path Constraints: Must increase exactly by 1 in height at each step
+    /// - Movement: Only in 4 directions (up, down, left, right)
+    /// - Valid Path: Any path from height 0 to height 9
+    ///
+    /// ### Implementation Steps:
+    /// 1. Base Cases:
+    ///    - Return (0, empty_set) if position was already visited
+    ///    - Return (0, empty_set) if current height doesn't match expected
+    ///    - Return (1, set_with_current) if height is 9
+    ///
+    /// 2. Recursive Exploration:
+    ///    - Mark current position as visited
+    ///    - For each adjacent position:
+    ///      - Check if it's within bounds
+    ///      - Check if its height is exactly current_height + 1
+    ///      - Recursively explore valid positions
+    ///      - Accumulate paths count and reachable nines
     ///
     /// ## Arguments
-    /// * `pos` - The current position.
-    /// * `visited` - The set of visited positions.
-    /// * `reachable_nines` - The set of reachable nines.
-    /// * `current_height` - The current height.
+    /// * `pos` - The current position (x, y)
+    /// * `visited` - Set of already visited positions
+    /// * `current_height` - The expected height at the current position
     ///
-    /// ## Explanation
-    /// This function performs a depth-first search to find all height-9 positions that can be reached
-    /// from a trailhead following valid hiking trails. A valid trail:
-    /// - Must increase by exactly 1 in height at each step
-    /// - Can only move up, down, left, or right (no diagonals)
-    /// - Starts at height 0 and can reach positions of height 9
+    /// ## Returns
+    /// * `(usize, HashSet<(usize, usize)>)` - A tuple containing:
+    ///   - The number of valid paths found
+    ///   - Set of all reachable height-9 positions
     ///
-    /// The function:
-    /// 1. Checks if position was already visited to avoid cycles
-    /// 2. Validates the current height matches expected height
-    /// 3. Marks position as visited
-    /// 4. If height is 9, adds position to reachable_nines
-    /// 5. Recursively explores adjacent positions that are exactly 1 height
-    fn dfs(
+    /// ## Details
+    /// A valid path must:
+    /// - Increase by exactly 1 in height at each step
+    /// - Only move in cardinal directions (up, down, left, right)
+    /// - Start at height 0 and can reach positions of height 9
+    ///
+    fn traverse_paths(
         &self,
         pos: (usize, usize),
         visited: &mut HashSet<(usize, usize)>,
-        reachable_nines: &mut HashSet<(usize, usize)>,
         current_height: u32,
-    ) {
+    ) -> (usize, HashSet<(usize, usize)>) {
+        // Return early if position was already visited
         if visited.contains(&pos) {
-            return;
+            return (0, HashSet::new());
         }
 
         let (x, y) = pos;
         let height = self.heights[y][x];
 
+        // Return early if height doesn't match expected height
         if height != current_height {
-            return;
+            return (0, HashSet::new());
         }
 
+        // Mark current position as visited
         visited.insert(pos);
 
+        // If we reached height 9, we found a valid endpoint
         if height == 9 {
-            reachable_nines.insert(pos);
-            return;
+            let mut nines = HashSet::new();
+            nines.insert(pos);
+            return (1, nines);
         }
 
-        // Check all adjacent positions
+        // Initialize accumulators for recursive exploration
+        let mut total_paths = 0;
+        let mut reachable_nines = HashSet::new();
         let directions = [(0, 1), (1, 0), (0, -1), (-1, 0)];
+
+        // Explore all adjacent positions
         for (dx, dy) in directions {
             let new_x = x as i32 + dx;
             let new_y = y as i32 + dy;
 
+            // Check if new position is within bounds
             if new_x >= 0 && new_x < self.width as i32 && new_y >= 0 && new_y < self.height as i32 {
                 let next_pos = (new_x as usize, new_y as usize);
                 let next_height = self.heights[next_pos.1][next_pos.0];
 
+                // Only proceed if height increases by exactly 1
                 if next_height == height + 1 {
-                    self.dfs(next_pos, visited, reachable_nines, height + 1);
+                    let (paths, nines) =
+                        self.traverse_paths(next_pos, &mut visited.clone(), height + 1);
+                    total_paths += paths;
+                    reachable_nines.extend(nines);
                 }
             }
         }
+
+        (total_paths, reachable_nines)
     }
 }
 // Functions  =========================================================================== Functions
