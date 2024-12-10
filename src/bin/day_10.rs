@@ -73,6 +73,75 @@ impl HeightMap {
     }
 
     ///
+    /// # `calculate_trailhead_rating`
+    /// Calculate the rating of a trailhead.
+    /// A trailhead's rating is the number of distinct hiking trails which begin at that trailhead.
+    ///
+    /// ## Arguments
+    /// * `start` - The starting position of the trailhead.
+    ///
+    /// ## Returns
+    /// * `usize` - The rating of the trailhead.
+    fn calculate_trailhead_rating(&self, start: (usize, usize)) -> usize {
+        let mut visited = HashSet::new();
+        self.count_paths(start, &mut visited, 0)
+    }
+
+    ///
+    /// # `count_paths`
+    /// Count the number of paths that can be taken from a trailhead.
+    ///
+    /// ## Arguments
+    /// * `pos` - The current position.
+    /// * `visited` - The set of visited positions.
+    /// * `current_height` - The current height.
+    ///
+    /// ## Returns
+    /// * `usize` - The number of paths that can be taken.
+    fn count_paths(
+        &self,
+        pos: (usize, usize),
+        visited: &mut HashSet<(usize, usize)>,
+        current_height: u32,
+    ) -> usize {
+        if visited.contains(&pos) {
+            return 0;
+        }
+
+        let (x, y) = pos;
+        let height = self.heights[y][x];
+
+        if height != current_height {
+            return 0;
+        }
+
+        if height == 9 {
+            return 1; // Found a valid path
+        }
+
+        visited.insert(pos);
+
+        let mut paths = 0;
+        let directions = [(0, 1), (1, 0), (0, -1), (-1, 0)];
+
+        for (dx, dy) in directions {
+            let new_x = x as i32 + dx;
+            let new_y = y as i32 + dy;
+
+            if new_x >= 0 && new_x < self.width as i32 && new_y >= 0 && new_y < self.height as i32 {
+                let next_pos = (new_x as usize, new_y as usize);
+                let next_height = self.heights[next_pos.1][next_pos.0];
+
+                if next_height == height + 1 {
+                    paths += self.count_paths(next_pos, &mut visited.clone(), height + 1);
+                }
+            }
+        }
+
+        paths
+    }
+
+    ///
     /// # `dfs`
     /// Depth First Search to find all the reachable nines.
     ///
@@ -159,14 +228,22 @@ pub fn response_part_2() {
     println!("Day 10 - Part 2");
     let start = std::time::Instant::now();
 
+    let height_map = INPUT.parse::<HeightMap>().unwrap();
+    let trailheads = height_map.find_trailheads();
+    let total_rating: usize = trailheads
+        .iter()
+        .map(|&pos| height_map.calculate_trailhead_rating(pos))
+        .sum();
+
     let duration = start.elapsed();
 
+    println!("Total rating: {total_rating}");
     println!("Duration: {duration:?}");
 }
 
 fn main() {
     response_part_1();
-    // response_part_2();
+    response_part_2();
 }
 
 // Tests ==================================================================================== Tests
@@ -195,13 +272,26 @@ mod tests {
     }
 
     #[test]
-    fn test_example1() {
+    fn test_example_1() {
         let height_map = EXAMPLE1.parse::<HeightMap>().unwrap();
         let trailheads = height_map.find_trailheads();
         let total_score: usize = trailheads
             .iter()
             .map(|&pos| height_map.calculate_trailhead_score(pos))
             .sum();
+
         assert_eq!(total_score, 36);
+    }
+
+    #[test]
+    fn test_example_2() {
+        let height_map = EXAMPLE1.parse::<HeightMap>().unwrap();
+        let trailheads = height_map.find_trailheads();
+        let total_rating: usize = trailheads
+            .iter()
+            .map(|&pos| height_map.calculate_trailhead_rating(pos))
+            .sum();
+
+        assert_eq!(total_rating, 81);
     }
 }
