@@ -3,7 +3,10 @@
 /// Code for the day 11 of the Advent of Code challenge year 2024
 ///
 // Imports  ==============================================================================  Imports
-use std::str::FromStr;
+use std::{
+    collections::{HashMap, VecDeque},
+    str::FromStr,
+};
 
 // Variables  =========================================================================== Variables
 const INPUT: &str = include_str!("../../data/inputs/day_11.txt");
@@ -39,26 +42,140 @@ impl Stones {
     /// ## Arguments
     /// * `n` - The number of times to simulate the blinking
     fn simulate_blinking(&mut self, n: usize) {
-        for _ in 0..n {
-            let mut new_arrangement = Vec::new();
+        const MULTIPLIER: usize = 2024;
 
-            for stone in &self.arrangement {
-                if *stone == 0 {
-                    new_arrangement.push(1);
-                } else if stone.to_string().len() % 2 == 0 {
-                    let stone_str = stone.to_string();
-                    let half = stone_str.len() / 2;
-                    let left = stone_str[..half].parse().unwrap();
-                    let right = stone_str[half..].parse().unwrap();
-                    new_arrangement.push(left);
-                    new_arrangement.push(right);
+        // Use a tuple of (value, digit_count) to avoid recounting digits
+        let mut current: Vec<(usize, u32)> = self
+            .arrangement
+            .iter()
+            .map(|&x| {
+                (
+                    x,
+                    if x == 0 {
+                        1
+                    } else {
+                        (x as f64).log10() as u32 + 1
+                    },
+                )
+            })
+            .collect();
+
+        for i in 0..n {
+            println!("Iteration: {i}");
+            let mut next = Vec::with_capacity(current.len() * 2);
+
+            for &(value, digits) in &current {
+                if value == 0 {
+                    next.push((1, 1));
+                } else if digits % 2 == 0 {
+                    let power = 10_usize.pow(digits / 2);
+                    let left = value / power;
+                    let right = value % power;
+                    // Calculate new digit counts directly
+                    let left_digits = if left == 0 {
+                        1
+                    } else {
+                        (left as f64).log10() as u32 + 1
+                    };
+                    let right_digits = if right == 0 {
+                        1
+                    } else {
+                        (right as f64).log10() as u32 + 1
+                    };
+                    next.push((left, left_digits));
+                    next.push((right, right_digits));
                 } else {
-                    new_arrangement.push(stone * 2024);
+                    let new_value = value * MULTIPLIER;
+                    let new_digits = (new_value as f64).log10() as u32 + 1;
+                    next.push((new_value, new_digits));
                 }
             }
 
-            self.arrangement = new_arrangement;
+            current = next;
         }
+
+        // Convert back to final arrangement
+        self.arrangement = current.into_iter().map(|(value, _)| value).collect();
+    }
+
+    ///
+    /// # `count_evolved_stones`
+    /// Efficiently counts the number of stones after n iterations without maintaining actual values
+    /// Uses a combination of queue-based processing and recursive calculation with memoization.
+    ///
+    /// ## Arguments
+    /// * `iterations` - The number of times to simulate the blinking
+    ///
+    /// ## Returns
+    /// * `usize` - The number of stones after n iterations
+    fn count_evolved_stones(&self, iterations: usize) -> usize {
+        let mut memo: HashMap<(usize, usize), usize> = HashMap::new(); // Cache for (stone, iteration) -> count
+        let mut queue: VecDeque<_> = self
+            .arrangement
+            .iter()
+            .map(|&stone| (stone, iterations))
+            .collect();
+
+        let mut total = 0;
+
+        // Process each initial stone
+        while let Some((stone, iters)) = queue.pop_front() {
+            total += self.count_evolved_stones_recursive(stone, iters, &mut memo);
+        }
+
+        total
+    }
+
+    ///
+    /// # `count_evolved_stones_recursive`
+    /// Recursive helper function that calculates the number of stones that will evolve from
+    /// a single stone after n iterations.
+    ///
+    /// ## Arguments
+    /// * `stone` - The value of the stone
+    /// * `iterations` - The number of times to simulate the blinking
+    /// * `memo` - A cache for (stone, iteration) -> count
+    fn count_evolved_stones_recursive(
+        &self,
+        stone: usize,
+        iterations: usize,
+        memo: &mut HashMap<(usize, usize), usize>,
+    ) -> usize {
+        // Base case: no more iterations
+        if iterations == 0 {
+            return 1;
+        }
+
+        // Check if result is already cached
+        if let Some(&count) = memo.get(&(stone, iterations)) {
+            return count;
+        }
+
+        // Calculate result based on transformation rules
+        let result = if stone == 0 {
+            // Rule 1: 0 becomes 1
+            self.count_evolved_stones_recursive(1, iterations - 1, memo)
+        } else {
+            let digits = stone.to_string();
+            let digit_count = digits.len();
+
+            if digit_count % 2 == 0 {
+                // Rule 2: Split even-digit numbers
+                let mid = digit_count / 2;
+                let left = digits[..mid].parse::<usize>().unwrap();
+                let right = digits[mid..].parse::<usize>().unwrap();
+
+                self.count_evolved_stones_recursive(left, iterations - 1, memo)
+                    + self.count_evolved_stones_recursive(right, iterations - 1, memo)
+            } else {
+                // Rule 3: Multiply by 2024
+                self.count_evolved_stones_recursive(stone * 2024, iterations - 1, memo)
+            }
+        };
+
+        // Cache and return result
+        memo.insert((stone, iterations), result);
+        result
     }
 }
 
@@ -67,10 +184,8 @@ pub fn response_part_1() {
     println!("Day 11 - Part 1");
     let start = std::time::Instant::now();
 
-    let mut stones: Stones = INPUT.parse().unwrap();
-    stones.simulate_blinking(25);
-
-    let len = stones.arrangement.len();
+    let stones: Stones = INPUT.parse().unwrap();
+    let len = stones.count_evolved_stones(25);
 
     let duration = start.elapsed();
 
@@ -82,14 +197,18 @@ pub fn response_part_2() {
     println!("Day 11 - Part 2");
     let start = std::time::Instant::now();
 
+    let stones: Stones = INPUT.parse().unwrap();
+    let len = stones.count_evolved_stones(75);
+
     let duration = start.elapsed();
 
+    println!("The number of stones is: {len}");
     println!("Duration: {duration:?}");
 }
 
 fn main() {
     response_part_1();
-    //response_part_2();
+    response_part_2();
 }
 
 // Tests ==================================================================================== Tests
