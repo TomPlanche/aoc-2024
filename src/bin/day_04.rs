@@ -20,6 +20,7 @@
 /// - Count total valid X-patterns in the grid
 ///
 // Imports  ==============================================================================  Imports
+use aoc_2024::Direction;
 use std::str::FromStr;
 
 // Variables  =========================================================================== Variables
@@ -32,12 +33,6 @@ struct Grid {
     data: Vec<String>,
     height: usize,
     width: usize,
-}
-
-#[derive(Debug, Copy, Clone)]
-struct Direction {
-    row_delta: i32,
-    col_delta: i32,
 }
 
 // Implementation ======================================================================= Implementation
@@ -82,10 +77,10 @@ impl Grid {
         target: &str,
     ) -> bool {
         target.chars().enumerate().all(|(i, target_char)| {
-            let new_row =
-                i32::try_from(row).unwrap() + direction.row_delta * i32::try_from(i).unwrap();
-            let new_col =
-                i32::try_from(col).unwrap() + direction.col_delta * i32::try_from(i).unwrap();
+            let new_row = i32::try_from(row).unwrap()
+                + direction.row_delta() as i32 * i32::try_from(i).unwrap();
+            let new_col = i32::try_from(col).unwrap()
+                + direction.col_delta() as i32 * i32::try_from(i).unwrap();
 
             self.get_char(new_row, new_col)
                 .map_or(false, |c| c == target_char)
@@ -94,38 +89,14 @@ impl Grid {
 
     fn count_xmas_occurrences(&self) -> usize {
         let directions = [
-            Direction {
-                row_delta: 0,
-                col_delta: 1,
-            }, // right
-            Direction {
-                row_delta: 1,
-                col_delta: 0,
-            }, // down
-            Direction {
-                row_delta: 1,
-                col_delta: 1,
-            }, // diagonal down-right
-            Direction {
-                row_delta: -1,
-                col_delta: 1,
-            }, // diagonal up-right
-            Direction {
-                row_delta: 0,
-                col_delta: -1,
-            }, // left
-            Direction {
-                row_delta: -1,
-                col_delta: 0,
-            }, // up
-            Direction {
-                row_delta: -1,
-                col_delta: -1,
-            }, // diagonal up-left
-            Direction {
-                row_delta: 1,
-                col_delta: -1,
-            }, // diagonal down-left
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+            Direction::UpLeft,
+            Direction::UpRight,
+            Direction::DownLeft,
+            Direction::DownRight,
         ];
 
         let mut count = 0;

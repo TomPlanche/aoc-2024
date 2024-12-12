@@ -1,5 +1,7 @@
+mod directions;
 mod points;
 
+pub use directions::Direction;
 pub use points::Point;
 
 ///

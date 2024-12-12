@@ -1,23 +1,14 @@
-use std::str::FromStr;
-
 ///
 /// # `day_06.rs`
 /// Code for the day 06 of the Advent of Code challenge year 2024
 ///
 // Imports  ==============================================================================  Imports
-use aoc_2024::Point;
+use aoc_2024::{Direction, Point};
 use indicatif::ProgressBar;
+use std::str::FromStr;
 
 // Variables  =========================================================================== Variables
 const INPUT: &str = include_str!("../../data/inputs/day_06.txt");
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum Directions {
-    Up,
-    Down,
-    Left,
-    Right,
-}
 
 ///
 /// # `Guard`
@@ -25,7 +16,7 @@ enum Directions {
 #[derive(Debug, Clone)]
 struct Guard {
     position: Point<i32>,
-    direction: Directions,
+    direction: Direction,
     path: Vec<Point<i32>>, // Stores the history of positions
     steps_taken: usize,
 }
@@ -41,7 +32,7 @@ impl Guard {
     ///
     /// ## Returns
     /// * `Guard` - A new Guard instance with initialized path history
-    fn new(position: Point<i32>, direction: Directions) -> Self {
+    fn new(position: Point<i32>, direction: Direction) -> Self {
         let path = vec![position];
 
         Guard {
@@ -61,10 +52,11 @@ impl Guard {
     #[allow(dead_code)]
     fn direction_char(&self) -> char {
         match self.direction {
-            Directions::Up => '^',
-            Directions::Down => 'v',
-            Directions::Left => '<',
-            Directions::Right => '>',
+            Direction::Up => '^',
+            Direction::Down => 'v',
+            Direction::Left => '<',
+            Direction::Right => '>',
+            _ => unreachable!(),
         }
     }
 
@@ -73,10 +65,11 @@ impl Guard {
     /// Rotates the guard 90 degrees clockwise
     fn turn_right(&mut self) {
         self.direction = match self.direction {
-            Directions::Up => Directions::Right,
-            Directions::Right => Directions::Down,
-            Directions::Down => Directions::Left,
-            Directions::Left => Directions::Up,
+            Direction::Up => Direction::Right,
+            Direction::Right => Direction::Down,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
+            _ => unreachable!(),
         };
     }
 
@@ -85,10 +78,11 @@ impl Guard {
     /// Moves the guard one step forward in their current direction and records the movement
     fn move_forward(&mut self) {
         let new_position = match self.direction {
-            Directions::Up => Point::new(self.position.x, self.position.y - 1),
-            Directions::Down => Point::new(self.position.x, self.position.y + 1),
-            Directions::Left => Point::new(self.position.x - 1, self.position.y),
-            Directions::Right => Point::new(self.position.x + 1, self.position.y),
+            Direction::Up => Point::new(self.position.x, self.position.y - 1),
+            Direction::Down => Point::new(self.position.x, self.position.y + 1),
+            Direction::Left => Point::new(self.position.x - 1, self.position.y),
+            Direction::Right => Point::new(self.position.x + 1, self.position.y),
+            _ => unreachable!(),
         };
 
         self.position = new_position;
@@ -104,10 +98,11 @@ impl Guard {
     /// * `Point` - The position the guard would move to if they stepped forward
     fn get_next_position(&self) -> Point<i32> {
         match self.direction {
-            Directions::Up => Point::new(self.position.x, self.position.y - 1),
-            Directions::Down => Point::new(self.position.x, self.position.y + 1),
-            Directions::Left => Point::new(self.position.x - 1, self.position.y),
-            Directions::Right => Point::new(self.position.x + 1, self.position.y),
+            Direction::Up => Point::new(self.position.x, self.position.y - 1),
+            Direction::Down => Point::new(self.position.x, self.position.y + 1),
+            Direction::Left => Point::new(self.position.x - 1, self.position.y),
+            Direction::Right => Point::new(self.position.x + 1, self.position.y),
+            _ => unreachable!(),
         }
     }
 }
@@ -129,7 +124,7 @@ impl FromStr for Grid {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut obstacles = Vec::new();
         let mut guard_position = Point::new(0, 0);
-        let mut guard_direction = Directions::Up;
+        let mut guard_direction = Direction::Up;
 
         let mut width = 0;
         let mut height = 0;
@@ -144,19 +139,19 @@ impl FromStr for Grid {
                     '#' => obstacles.push(p),
                     '^' => {
                         guard_position = p;
-                        guard_direction = Directions::Up;
+                        guard_direction = Direction::Up;
                     }
                     'v' => {
                         guard_position = p;
-                        guard_direction = Directions::Down;
+                        guard_direction = Direction::Down;
                     }
                     '<' => {
                         guard_position = p;
-                        guard_direction = Directions::Left;
+                        guard_direction = Direction::Left;
                     }
                     '>' => {
                         guard_position = p;
-                        guard_direction = Directions::Right;
+                        guard_direction = Direction::Right;
                     }
                     _ => {}
                 }
@@ -298,10 +293,11 @@ impl Grid {
             }
 
             let next_pos = match current_dir {
-                Directions::Up => Point::new(current_pos.x, current_pos.y - 1),
-                Directions::Down => Point::new(current_pos.x, current_pos.y + 1),
-                Directions::Left => Point::new(current_pos.x - 1, current_pos.y),
-                Directions::Right => Point::new(current_pos.x + 1, current_pos.y),
+                Direction::Up => Point::new(current_pos.x, current_pos.y - 1),
+                Direction::Down => Point::new(current_pos.x, current_pos.y + 1),
+                Direction::Left => Point::new(current_pos.x - 1, current_pos.y),
+                Direction::Right => Point::new(current_pos.x + 1, current_pos.y),
+                _ => unreachable!(),
             };
 
             // Check if out of bounds
@@ -312,10 +308,11 @@ impl Grid {
             // Check if hitting obstacle (including the new one)
             if temp_obstacles.contains(&next_pos) {
                 current_dir = match current_dir {
-                    Directions::Up => Directions::Right,
-                    Directions::Right => Directions::Down,
-                    Directions::Down => Directions::Left,
-                    Directions::Left => Directions::Up,
+                    Direction::Up => Direction::Right,
+                    Direction::Right => Direction::Down,
+                    Direction::Down => Direction::Left,
+                    Direction::Left => Direction::Up,
+                    _ => unreachable!(),
                 };
             } else {
                 current_pos = next_pos;
@@ -345,10 +342,11 @@ impl Grid {
         // Get all positions the guard could potentially visit
         loop {
             let next_pos = match current_dir {
-                Directions::Up => Point::new(current_pos.x, current_pos.y - 1),
-                Directions::Down => Point::new(current_pos.x, current_pos.y + 1),
-                Directions::Left => Point::new(current_pos.x - 1, current_pos.y),
-                Directions::Right => Point::new(current_pos.x + 1, current_pos.y),
+                Direction::Up => Point::new(current_pos.x, current_pos.y - 1),
+                Direction::Down => Point::new(current_pos.x, current_pos.y + 1),
+                Direction::Left => Point::new(current_pos.x - 1, current_pos.y),
+                Direction::Right => Point::new(current_pos.x + 1, current_pos.y),
+                _ => unreachable!(),
             };
 
             if !self.in_bounds(next_pos) {
@@ -357,10 +355,11 @@ impl Grid {
 
             if self.is_obstacle(next_pos) {
                 current_dir = match current_dir {
-                    Directions::Up => Directions::Right,
-                    Directions::Right => Directions::Down,
-                    Directions::Down => Directions::Left,
-                    Directions::Left => Directions::Up,
+                    Direction::Up => Direction::Right,
+                    Direction::Right => Direction::Down,
+                    Direction::Down => Direction::Left,
+                    Direction::Left => Direction::Up,
+                    _ => unreachable!(),
                 };
             } else {
                 potential_positions.insert(next_pos);
