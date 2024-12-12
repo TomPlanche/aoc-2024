@@ -182,21 +182,47 @@ fn update_readme() {
     let existing_days = get_existing_days_in_readme();
     let staged_days = git_staged_files_to_days();
 
-    let new_days = staged_days
+    let days_to_update = staged_days
         .iter()
-        .filter(|day| !existing_days.contains(day))
+        .filter(|staged_day| {
+            // Get corresponding existing day if it exists
+            if let Some(existing_day) = existing_days.iter().find(|d| d.number == staged_day.number)
+            {
+                // Update if either part is missing
+                existing_day.part_1.is_none() || existing_day.part_2.is_none()
+            } else {
+                // Include new days
+                true
+            }
+        })
         .map(|day| time_execution(day.clone()))
         .collect::<Vec<Day>>();
 
     let mut final_days: Vec<Day> = existing_days
         .iter()
-        .chain(new_days.iter())
-        .cloned()
+        .map(|existing_day| {
+            // If this day needs updating, use the updated version
+            if let Some(updated_day) = days_to_update
+                .iter()
+                .find(|d| d.number == existing_day.number)
+            {
+                updated_day.clone()
+            } else {
+                existing_day.clone()
+            }
+        })
+        .chain(
+            // Add any new days that weren't in existing_days
+            days_to_update
+                .iter()
+                .filter(|day| !existing_days.iter().any(|d| d.number == day.number))
+                .cloned(),
+        )
         .collect();
 
     final_days.sort_by(|a, b| a.number.cmp(&b.number));
 
-    if new_days.is_empty() {
+    if days_to_update.is_empty() {
         return;
     }
 

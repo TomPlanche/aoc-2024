@@ -10,46 +10,93 @@ pub enum Direction {
     DownRight,
 }
 
-// direction to (usize, usize)
+// direction to (y, x)
 impl From<Direction> for (isize, isize) {
     fn from(d: Direction) -> Self {
         match d {
-            Direction::Up => (0, 1),
-            Direction::Down => (0, -1),
-            Direction::Left => (-1, 0),
-            Direction::Right => (1, 0),
-            Direction::UpLeft => (-1, 1),
-            Direction::UpRight => (1, 1),
-            Direction::DownLeft => (-1, -1),
-            Direction::DownRight => (1, -1),
+            Direction::Up => (-1, 0),       // Changed from (0, 1)
+            Direction::Down => (1, 0),      // Changed from (0, -1)
+            Direction::Left => (0, -1),     // Changed from (-1, 0)
+            Direction::Right => (0, 1),     // Changed from (1, 0)
+            Direction::UpLeft => (-1, -1),  // Changed from (-1, 1)
+            Direction::UpRight => (-1, 1),  // Changed from (1, 1)
+            Direction::DownLeft => (1, -1), // Changed from (-1, -1)
+            Direction::DownRight => (1, 1), // Changed from (1, -1)
         }
+    }
+}
+
+// (y, x) + direction
+impl std::ops::Add<Direction> for (isize, isize) {
+    type Output = (isize, isize);
+
+    fn add(self, d: Direction) -> Self::Output {
+        let (dy, dx) = d.into(); // Changed from (dx, dy)
+        (self.0 + dy, self.1 + dx) // Changed from (self.0 + dx, self.1 + dy)
+    }
+}
+
+impl std::ops::Add<Direction> for (usize, usize) {
+    type Output = (usize, usize);
+
+    fn add(self, d: Direction) -> Self::Output {
+        let (dy, dx) = d.into(); // Changed from (dx, dy)
+
+        // wrapping_add to avoid panics
+        (
+            self.0.wrapping_add(dy as usize), // Changed order
+            self.1.wrapping_add(dx as usize),
+        )
     }
 }
 
 impl Direction {
     pub fn row_delta(&self) -> isize {
         match self {
-            Direction::Up => 0,
-            Direction::Down => 0,
-            Direction::Left => -1,
-            Direction::Right => 1,
-            Direction::UpLeft => -1,
-            Direction::UpRight => 1,
-            Direction::DownLeft => -1,
-            Direction::DownRight => 1,
+            Direction::Up => -1,       // Changed from 0
+            Direction::Down => 1,      // Changed from 0
+            Direction::Left => 0,      // Changed from -1
+            Direction::Right => 0,     // Changed from 1
+            Direction::UpLeft => -1,   // No change needed
+            Direction::UpRight => -1,  // Changed from 1
+            Direction::DownLeft => 1,  // Changed from -1
+            Direction::DownRight => 1, // No change needed
         }
     }
 
     pub fn col_delta(&self) -> isize {
         match self {
-            Direction::Up => 1,
-            Direction::Down => -1,
-            Direction::Left => 0,
-            Direction::Right => 0,
-            Direction::UpLeft => 1,
-            Direction::UpRight => 1,
-            Direction::DownLeft => -1,
-            Direction::DownRight => -1,
+            Direction::Up => 0,        // Changed from 1
+            Direction::Down => 0,      // Changed from -1
+            Direction::Left => -1,     // Changed from 0
+            Direction::Right => 1,     // Changed from 0
+            Direction::UpLeft => -1,   // Changed from 1
+            Direction::UpRight => 1,   // No change needed
+            Direction::DownLeft => -1, // No change needed
+            Direction::DownRight => 1, // Changed from -1
+        }
+    }
+
+    pub fn from_points(from: (isize, isize), to: (isize, isize)) -> Result<Direction, ()> {
+        let dy = to.0 - from.0; // Changed from dx
+        let dx = to.1 - from.1; // Changed from dy
+
+        // Normalize the deltas to -1, 0, or 1
+        let dy = dy.signum(); // Changed from dx
+        let dx = dx.signum(); // Changed from dy
+
+        match (dy, dx) {
+            // Changed from (dx, dy)
+            (-1, 0) => Ok(Direction::Up),
+            (1, 0) => Ok(Direction::Down),
+            (0, -1) => Ok(Direction::Left),
+            (0, 1) => Ok(Direction::Right),
+            (-1, -1) => Ok(Direction::UpLeft),
+            (-1, 1) => Ok(Direction::UpRight),
+            (1, -1) => Ok(Direction::DownLeft),
+            (1, 1) => Ok(Direction::DownRight),
+            (0, 0) => Err(()),
+            _ => panic!("Invalid direction: ({}, {})", dy, dx),
         }
     }
 }
