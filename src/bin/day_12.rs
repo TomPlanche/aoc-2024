@@ -10,12 +10,14 @@
 /// Calculates region prices based on:
 /// - Area (number of cells in the region)
 /// - Perimeter (number of edges adjacent to different plant types or garden borders)
+///
 /// Price = Area × Perimeter
 ///
 /// ## Part 2
 /// Uses a different pricing formula based on:
 /// - Area (number of cells in the region)
 /// - Number of distinct sides (continuous boundaries, counting both outer and inner edges)
+///
 /// Price = Area × Number of Sides
 ///
 /// ## Implementation Details

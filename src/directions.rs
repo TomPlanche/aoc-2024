@@ -10,6 +10,11 @@ pub enum Direction {
     DownRight,
 }
 
+#[derive(Debug)]
+pub enum DirectionError {
+    InvalidDirection,
+}
+
 // direction to (y, x)
 impl From<Direction> for (isize, isize) {
     fn from(d: Direction) -> Self {
@@ -53,31 +58,24 @@ impl std::ops::Add<Direction> for (usize, usize) {
 impl Direction {
     pub fn row_delta(&self) -> isize {
         match self {
-            Direction::Up => -1,       // Changed from 0
-            Direction::Down => 1,      // Changed from 0
-            Direction::Left => 0,      // Changed from -1
-            Direction::Right => 0,     // Changed from 1
-            Direction::UpLeft => -1,   // No change needed
-            Direction::UpRight => -1,  // Changed from 1
-            Direction::DownLeft => 1,  // Changed from -1
-            Direction::DownRight => 1, // No change needed
+            Direction::Up | Direction::UpLeft | Direction::UpRight => -1,
+            Direction::Down | Direction::DownLeft | Direction::DownRight => 1,
+            _ => 0,
         }
     }
 
     pub fn col_delta(&self) -> isize {
         match self {
-            Direction::Up => 0,        // Changed from 1
-            Direction::Down => 0,      // Changed from -1
-            Direction::Left => -1,     // Changed from 0
-            Direction::Right => 1,     // Changed from 0
-            Direction::UpLeft => -1,   // Changed from 1
-            Direction::UpRight => 1,   // No change needed
-            Direction::DownLeft => -1, // No change needed
-            Direction::DownRight => 1, // Changed from -1
+            Direction::Up | Direction::Down => 0,
+            Direction::Left | Direction::UpLeft | Direction::DownLeft => -1,
+            Direction::Right | Direction::UpRight | Direction::DownRight => 1,
         }
     }
 
-    pub fn from_points(from: (isize, isize), to: (isize, isize)) -> Result<Direction, ()> {
+    pub fn from_points(
+        from: (isize, isize),
+        to: (isize, isize),
+    ) -> Result<Direction, DirectionError> {
         let dy = to.0 - from.0; // Changed from dx
         let dx = to.1 - from.1; // Changed from dy
 
@@ -95,8 +93,8 @@ impl Direction {
             (-1, 1) => Ok(Direction::UpRight),
             (1, -1) => Ok(Direction::DownLeft),
             (1, 1) => Ok(Direction::DownRight),
-            (0, 0) => Err(()),
-            _ => panic!("Invalid direction: ({}, {})", dy, dx),
+            (0, 0) => Err(DirectionError::InvalidDirection),
+            _ => panic!("Invalid direction: ({dy}, {dx})"),
         }
     }
 }

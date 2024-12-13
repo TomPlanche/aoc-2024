@@ -41,6 +41,7 @@ impl Stones {
     ///
     /// ## Arguments
     /// * `n` - The number of times to simulate the blinking
+    #[allow(dead_code)]
     fn simulate_blinking(&mut self, n: usize) {
         const MULTIPLIER: usize = 2024;
 
@@ -135,6 +136,7 @@ impl Stones {
     /// * `stone` - The value of the stone
     /// * `iterations` - The number of times to simulate the blinking
     /// * `memo` - A cache for (stone, iteration) -> count
+    #[allow(clippy::only_used_in_recursion)]
     fn count_evolved_stones_recursive(
         &self,
         stone: usize,
