@@ -242,6 +242,21 @@ pub fn response_part_2() {
 
     let duration = start.elapsed();
 
+    // print the robots' positions after `optimal_time_within_bounds` time.
+    let positions = robots
+        .move_instances(width, height, optimal_time_within_bounds as i32)
+        .collect::<Vec<_>>();
+
+    let mut grid = vec![vec!['.'; width as usize]; height as usize];
+
+    for (x, y) in positions {
+        grid[y as usize][x as usize] = '@';
+    }
+
+    for row in grid {
+        println!("{}", row.iter().collect::<String>());
+    }
+
     println!("Optimal time: {optimal_time_within_bounds}");
     println!("Duration: {duration:?}");
 }
