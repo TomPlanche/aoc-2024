@@ -3,29 +3,68 @@
 /// Code for the day 15 of the Advent of Code challenge year 2024
 ///
 // Imports  ==============================================================================  Imports
-use std::collections::HashSet;
-use std::fmt;
+use aoc_2024::Direction;
 use std::str::FromStr;
 use std::time::Instant;
-
-use aoc_2024::{Direction, Point};
+use std::{fmt, mem};
 
 // Variables  =========================================================================== Variables
 const INPUT: &str = include_str!("../../data/inputs/day_15.txt");
 
-type Position = Point<usize>;
+#[derive(PartialEq, Clone, Copy, Debug)]
+enum Tile {
+    Empty,
+    Wall,
+    Object,
+    Robot,
+    BoxLeft,
+    BoxRight,
+}
 
-#[derive(Debug, Hash, Eq, PartialEq, Clone)]
-struct Box {
-    position: Position,
-    width: usize,
+impl From<char> for Tile {
+    fn from(value: char) -> Self {
+        match value {
+            '#' => Self::Wall,
+            'O' => Self::Object,
+            '@' => Self::Robot,
+            '[' => Self::BoxLeft,
+            ']' => Self::BoxRight,
+            _ => Self::Empty,
+        }
+    }
+}
+
+impl Tile {
+    fn double(self) -> impl Iterator<Item = Self> {
+        match self {
+            Tile::Empty => [Tile::Empty, Tile::Empty].into_iter(),
+            Tile::Wall => [Tile::Wall, Tile::Wall].into_iter(),
+            Tile::Object => [Tile::BoxLeft, Tile::BoxRight].into_iter(),
+            Tile::Robot => [Tile::Robot, Tile::Empty].into_iter(),
+            Tile::BoxLeft | Tile::BoxRight => panic!(),
+        }
+    }
+}
+
+impl From<Tile> for char {
+    fn from(val: Tile) -> Self {
+        match val {
+            Tile::Empty => '.',
+            Tile::Wall => '#',
+            Tile::Object => 'O',
+            Tile::Robot => '@',
+            Tile::BoxLeft => '[',
+            Tile::BoxRight => ']',
+        }
+    }
 }
 
 #[derive(Debug)]
 struct Warehouse {
-    grid: Vec<Vec<char>>,
-    robot: Position,
-    boxes: HashSet<Box>,
+    grid: Vec<Vec<Tile>>,
+    robot: (usize, usize),
+    width: usize,
+    height: usize,
 }
 
 impl FromStr for Warehouse {
@@ -33,45 +72,38 @@ impl FromStr for Warehouse {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut grid = Vec::new();
-        let mut robot = Position { x: 0, y: 0 };
-        let mut boxes = HashSet::new();
+        let mut robot = (0, 0);
 
         for (y, line) in s.lines().enumerate() {
             let mut row = Vec::new();
             for (x, ch) in line.chars().enumerate() {
                 match ch {
-                    '@' => {
-                        robot = Position { x, y };
-                        row.push('.');
-                    }
-                    'O' => {
-                        boxes.insert(Box {
-                            position: Position { x, y },
-                            width: 1, // Assuming width is 1 for now
-                        });
-                        row.push('.');
-                    }
-                    _ => row.push(ch),
+                    '@' => robot = (y, x),
+                    _ => (),
                 }
+
+                row.push(ch.into());
             }
             grid.push(row);
         }
 
-        Ok(Warehouse { grid, robot, boxes })
+        let width = grid[0].len();
+        let height = grid.len();
+
+        Ok(Warehouse {
+            grid,
+            robot,
+            width,
+            height,
+        })
     }
 }
 
 impl fmt::Display for Warehouse {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut grid = self.grid.clone();
-        grid[self.robot.y][self.robot.x] = '@';
-        for b in &self.boxes {
-            grid[b.position.y][b.position.x] = 'O';
-        }
-
-        for row in &grid {
-            for ch in row {
-                write!(f, "{}", ch)?;
+        for row in &self.grid {
+            for tile in row {
+                write!(f, "{}", char::from(*tile))?;
             }
             writeln!(f)?;
         }
@@ -81,117 +113,109 @@ impl fmt::Display for Warehouse {
 }
 
 impl Warehouse {
-    ///
-    /// # `move_robot`
-    /// Move the robot in the given direction.
-    ///
-    /// ## Arguments
-    /// * `direction` - The direction in which the robot should move.
-    ///
-    /// ## Algorithm
-    /// 1. Determine the change in coordinates (dx, dy) based on the direction.
-    /// 2. Calculate the new position of the robot.
-    /// 3. Initialize a list to keep track of positions to move.
-    /// 4. While the new position contains a box:
-    ///     a. Calculate the next position for the box.
-    ///     b. If the next position is a wall, return without moving.
-    ///     c. Add the new position to the list of positions to move.
-    /// 5. If the final position is a wall, return without moving.
-    /// 6. Move the boxes in reverse order of the positions to move.
-    ///     Reverse order is used to ensure that the boxes are moved in the correct order.
-    /// 7. Update the robot's position to the first position in the list.
+    fn scale_width(&mut self) {
+        let mut temp: Vec<Vec<Tile>> = Vec::new();
+        mem::swap(&mut self.grid, &mut temp);
+
+        self.grid = temp
+            .into_iter()
+            .map(|row| row.into_iter().flat_map(Tile::double).collect())
+            .collect();
+
+        self.width *= 2;
+        self.robot.1 *= 2;
+    }
+
     fn move_robot(&mut self, direction: Direction) {
-        let (dx, dy) = match direction {
-            Direction::Up => (0, -1),
-            Direction::Down => (0, 1),
-            Direction::Left => (-1, 0),
-            Direction::Right => (1, 0),
-            _ => unreachable!("Invalid direction"),
-        };
+        let (row, col) = self.robot;
 
-        let mut new_robot_pos = Position {
-            x: (self.robot.x as isize + dx) as usize,
-            y: (self.robot.y as isize + dy) as usize,
-        };
-
-        let mut positions_to_move = vec![new_robot_pos];
-
-        // While the new position contains a box
-        while self.boxes.iter().any(|b| b.position == new_robot_pos) {
-            // Calculate the next position for the box
-            new_robot_pos = Position {
-                x: (new_robot_pos.x as isize + dx) as usize,
-                y: (new_robot_pos.y as isize + dy) as usize,
-            };
-
-            // If the next position is a wall, return without moving
-            if self.grid[new_robot_pos.y][new_robot_pos.x] == '#' {
-                return;
-            }
-
-            // Add the new position to the list of positions to move
-            positions_to_move.push(new_robot_pos);
-        }
-
-        // If the final position is a wall, return without moving
-        if self.grid[new_robot_pos.y][new_robot_pos.x] == '#' {
-            return;
-        }
-
-        // Move the boxes in reverse order of the positions to move
-        for pos in positions_to_move.iter().rev() {
-            if let Some(box_to_move) = self.boxes.take(&Box {
-                position: *pos,
-                width: 1,
-            }) {
-                let new_box_pos = Position {
-                    x: (pos.x as isize + dx) as usize,
-                    y: (pos.y as isize + dy) as usize,
-                };
-
-                self.boxes.insert(Box {
-                    position: new_box_pos,
-                    width: box_to_move.width,
-                });
-            }
-        }
-
-        self.robot = positions_to_move[0];
-    }
-
-    ///
-    /// # `execute_moves`
-    /// Execute the moves given in the string.
-    ///
-    /// ## Arguments
-    /// * `moves` - The string containing the moves to execute.
-    fn execute_moves(&mut self, moves: &str) {
-        for c in moves.chars() {
-            let direction: Direction = match c {
-                '^' => Direction::Up,
-                'v' => Direction::Down,
-                '<' => Direction::Left,
-                '>' => Direction::Right,
-                _ => unreachable!("Invalid direction"),
-            };
-
-            self.move_robot(direction);
+        if self.can_move_tile(row, col, direction) {
+            self.move_tile(row, col, direction);
+            self.robot = self.robot + direction;
         }
     }
 
-    ///
-    /// # `calculate_gps_sum`
-    /// Calculate the sum of the GPS coordinates of the boxes.
-    ///
-    /// ## Returns
-    /// * `usize` - The sum of the GPS coordinates of the boxes.
-    fn calculate_gps_sum(&self) -> usize {
-        self.boxes
-            .iter()
-            .map(|b| b.position.y * 100 + b.position.x)
-            .sum()
+    fn move_tile(&mut self, row: usize, col: usize, direction: Direction) {
+        let (next_row, next_col) = (row, col) + direction;
+        let next_tile = self.grid[next_row][next_col];
+
+        match next_tile {
+            Tile::Empty => {
+                self.grid[next_row][next_col] = self.grid[row][col];
+                self.grid[row][col] = Tile::Empty;
+            }
+            Tile::Object => {
+                self.move_tile(next_row, next_col, direction);
+                self.grid[next_row][next_col] = self.grid[row][col];
+                self.grid[row][col] = Tile::Empty;
+            }
+            Tile::BoxRight => {
+                self.move_tile(next_row, next_col - 1, direction);
+                self.move_tile(next_row, next_col, direction);
+                self.grid[next_row][next_col] = self.grid[row][col];
+                self.grid[row][col] = Tile::Empty;
+            }
+            Tile::BoxLeft => {
+                self.move_tile(next_row, next_col + 1, direction);
+                self.move_tile(next_row, next_col, direction);
+                self.grid[next_row][next_col] = self.grid[row][col];
+                self.grid[row][col] = Tile::Empty;
+            }
+            Tile::Wall => panic!(),
+            Tile::Robot => panic!(),
+        }
+    }
+
+    fn can_move_tile(&self, row: usize, col: usize, direction: Direction) -> bool {
+        let (next_row, next_col) = (row, col) + direction;
+        let next_tile = self.grid[next_row][next_col];
+
+        match next_tile {
+            Tile::Empty => true,
+            Tile::Wall => false,
+            Tile::Object => self.can_move_tile(next_row, next_col, direction),
+            Tile::BoxLeft => {
+                if direction == Direction::Left {
+                    self.can_move_tile(next_row, next_col, direction)
+                } else if direction == Direction::Right {
+                    self.can_move_tile(next_row, next_col + 1, direction)
+                } else {
+                    self.can_move_tile(next_row, next_col + 1, direction)
+                        && self.can_move_tile(next_row, next_col, direction)
+                }
+            }
+            Tile::BoxRight => {
+                if direction == Direction::Right {
+                    self.can_move_tile(next_row, next_col, direction)
+                } else if direction == Direction::Left {
+                    self.can_move_tile(next_row, next_col - 1, direction)
+                } else {
+                    self.can_move_tile(next_row, next_col - 1, direction)
+                        && self.can_move_tile(next_row, next_col, direction)
+                }
+            }
+            Tile::Robot => panic!(),
+        }
+    }
+
+    fn gps_coordinate(row: usize, col: usize) -> usize {
+        row * 100 + col
+    }
+
+    fn sum_gps_coordinates(&self) -> usize {
+        let mut sum = 0;
+        for row in 0..self.height {
+            for col in 0..self.width {
+                if self.grid[row][col] == Tile::Object || self.grid[row][col] == Tile::BoxLeft {
+                    sum += Self::gps_coordinate(row, col);
+                }
+            }
+        }
+
+        sum
     }
 }
+
 // Functions  =========================================================================== Functions
 pub fn response_part_1() {
     println!("Day 15 - Part 1");
@@ -199,16 +223,25 @@ pub fn response_part_1() {
 
     let mut parts = INPUT.split("\n\n");
     let warehouse_str = parts.next().unwrap();
-    let moves = parts.next().unwrap().replace("\n", "");
+    let moves: Vec<Direction> = parts
+        .next()
+        .unwrap()
+        .replace("\n", "")
+        .chars()
+        .map(Direction::from)
+        .collect();
 
     let mut warehouse: Warehouse = warehouse_str.parse().unwrap();
-    warehouse.execute_moves(&moves);
 
-    let gps_sum = warehouse.calculate_gps_sum();
+    for direction in moves {
+        warehouse.move_robot(direction);
+    }
+
+    let sum = warehouse.sum_gps_coordinates();
 
     let duration = start.elapsed();
 
-    println!("GPS sum: {gps_sum}");
+    println!("Sum of GPS coordinates: {}", sum);
     println!("Duration: {duration:?}");
 }
 
@@ -216,14 +249,34 @@ pub fn response_part_2() {
     println!("Day 15 - Part 2");
     let start = std::time::Instant::now();
 
+    let mut parts = INPUT.split("\n\n");
+    let warehouse = parts.next().unwrap();
+    let moves = parts.next().unwrap();
+
+    let mut warehouse = warehouse.parse::<Warehouse>().unwrap();
+    let moves: Vec<Direction> = moves
+        .lines()
+        .flat_map(|line| line.chars())
+        .map(Direction::from)
+        .collect();
+
+    warehouse.scale_width();
+
+    for direction in moves {
+        warehouse.move_robot(direction);
+    }
+
+    let sum = warehouse.sum_gps_coordinates();
+
     let duration = start.elapsed();
 
+    println!("Sum of GPS coordinates: {}", sum);
     println!("Duration: {duration:?}");
 }
 
 fn main() {
     response_part_1();
-    //response_part_2();
+    response_part_2();
 }
 
 // Tests ==================================================================================== Tests
@@ -232,28 +285,71 @@ mod tests {
     use super::*;
 
     const TEST_INPUT: &str = "\
-########
-#..O.O.#
-##@.O..#
-#...O..#
-#.#.O..#
-#...O..#
-#......#
-########
+##########
+#..O..O.O#
+#......O.#
+#.OO..O.O#
+#..O@..O.#
+#O#..O...#
+#O..O..O.#
+#.OO.O.OO#
+#....O...#
+##########
 
-<^^>>>vv<v>>v<<";
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
 
     #[test]
     fn test_part_1() {
         let mut parts = TEST_INPUT.split("\n\n");
-        let warehouse_str = parts.next().unwrap();
-        let moves = parts.next().unwrap().replace("\n", "");
 
-        let mut warehouse: Warehouse = warehouse_str.parse().unwrap();
-        warehouse.execute_moves(&moves);
+        let mut warehouse: Warehouse = parts.next().unwrap().parse().unwrap();
+        let moves: Vec<Direction> = parts
+            .next()
+            .unwrap()
+            .replace("\n", "")
+            .chars()
+            .map(Direction::from)
+            .collect();
 
-        let gps_sum = warehouse.calculate_gps_sum();
+        for direction in moves {
+            warehouse.move_robot(direction);
+        }
 
-        assert_eq!(gps_sum, 2028);
+        assert_eq!(warehouse.sum_gps_coordinates(), 10092);
+    }
+
+    #[test]
+    fn test_part_2() {
+        let mut parts = TEST_INPUT.split("\n\n");
+
+        let mut warehouse: Warehouse = parts.next().unwrap().parse().unwrap();
+        let moves: Vec<Direction> = parts
+            .next()
+            .unwrap()
+            .replace("\n", "")
+            .chars()
+            .map(Direction::from)
+            .collect();
+
+        warehouse.scale_width();
+
+        println!("{}", warehouse);
+
+        for direction in moves {
+            println!("{:?}", direction);
+            warehouse.move_robot(direction);
+            println!("{}", warehouse);
+        }
+
+        assert_eq!(warehouse.sum_gps_coordinates(), 9021);
     }
 }

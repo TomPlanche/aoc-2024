@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 #[derive(Debug, PartialEq, Clone, Copy, Hash, Eq)]
 pub enum Direction {
     Up,
@@ -32,7 +34,7 @@ impl From<Direction> for (isize, isize) {
 }
 
 // (y, x) + direction
-impl std::ops::Add<Direction> for (isize, isize) {
+impl Add<Direction> for (isize, isize) {
     type Output = (isize, isize);
 
     fn add(self, d: Direction) -> Self::Output {
@@ -41,7 +43,7 @@ impl std::ops::Add<Direction> for (isize, isize) {
     }
 }
 
-impl std::ops::Add<Direction> for (usize, usize) {
+impl Add<Direction> for (usize, usize) {
     type Output = (usize, usize);
 
     fn add(self, d: Direction) -> Self::Output {
@@ -95,6 +97,18 @@ impl Direction {
             (1, 1) => Ok(Direction::DownRight),
             (0, 0) => Err(DirectionError::InvalidDirection),
             _ => panic!("Invalid direction: ({dy}, {dx})"),
+        }
+    }
+}
+
+impl From<char> for Direction {
+    fn from(value: char) -> Self {
+        match value {
+            '^' => Self::Up,
+            '>' => Self::Right,
+            '<' => Self::Left,
+            'v' => Self::Down,
+            _ => panic!(),
         }
     }
 }
