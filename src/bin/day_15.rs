@@ -15,11 +15,17 @@ const INPUT: &str = include_str!("../../data/inputs/day_15.txt");
 
 type Position = Point<usize>;
 
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+struct Box {
+    position: Position,
+    width: usize,
+}
+
 #[derive(Debug)]
 struct Warehouse {
     grid: Vec<Vec<char>>,
     robot: Position,
-    boxes: HashSet<Position>,
+    boxes: HashSet<Box>,
 }
 
 impl FromStr for Warehouse {
@@ -39,7 +45,10 @@ impl FromStr for Warehouse {
                         row.push('.');
                     }
                     'O' => {
-                        boxes.insert(Position { x, y });
+                        boxes.insert(Box {
+                            position: Position { x, y },
+                            width: 1, // Assuming width is 1 for now
+                        });
                         row.push('.');
                     }
                     _ => row.push(ch),
@@ -56,8 +65,8 @@ impl fmt::Display for Warehouse {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut grid = self.grid.clone();
         grid[self.robot.y][self.robot.x] = '@';
-        for pos in &self.boxes {
-            grid[pos.y][pos.x] = 'O';
+        for b in &self.boxes {
+            grid[b.position.y][b.position.x] = 'O';
         }
 
         for row in &grid {
@@ -108,7 +117,7 @@ impl Warehouse {
         let mut positions_to_move = vec![new_robot_pos];
 
         // While the new position contains a box
-        while self.boxes.contains(&new_robot_pos) {
+        while self.boxes.iter().any(|b| b.position == new_robot_pos) {
             // Calculate the next position for the box
             new_robot_pos = Position {
                 x: (new_robot_pos.x as isize + dx) as usize,
@@ -131,14 +140,19 @@ impl Warehouse {
 
         // Move the boxes in reverse order of the positions to move
         for pos in positions_to_move.iter().rev() {
-            if self.boxes.contains(pos) {
+            if let Some(box_to_move) = self.boxes.take(&Box {
+                position: *pos,
+                width: 1,
+            }) {
                 let new_box_pos = Position {
                     x: (pos.x as isize + dx) as usize,
                     y: (pos.y as isize + dy) as usize,
                 };
 
-                self.boxes.remove(pos);
-                self.boxes.insert(new_box_pos);
+                self.boxes.insert(Box {
+                    position: new_box_pos,
+                    width: box_to_move.width,
+                });
             }
         }
 
@@ -172,7 +186,10 @@ impl Warehouse {
     /// ## Returns
     /// * `usize` - The sum of the GPS coordinates of the boxes.
     fn calculate_gps_sum(&self) -> usize {
-        self.boxes.iter().map(|pos| pos.y * 100 + pos.x).sum()
+        self.boxes
+            .iter()
+            .map(|b| b.position.y * 100 + b.position.x)
+            .sum()
     }
 }
 // Functions  =========================================================================== Functions
