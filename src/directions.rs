@@ -57,6 +57,18 @@ impl Add<Direction> for (usize, usize) {
     }
 }
 
+impl From<char> for Direction {
+    fn from(value: char) -> Self {
+        match value {
+            '^' => Self::Up,
+            '>' => Self::Right,
+            '<' => Self::Left,
+            'v' => Self::Down,
+            _ => panic!(),
+        }
+    }
+}
+
 impl Direction {
     pub fn row_delta(&self) -> isize {
         match self {
@@ -99,16 +111,34 @@ impl Direction {
             _ => panic!("Invalid direction: ({dy}, {dx})"),
         }
     }
-}
 
-impl From<char> for Direction {
-    fn from(value: char) -> Self {
-        match value {
-            '^' => Self::Up,
-            '>' => Self::Right,
-            '<' => Self::Left,
-            'v' => Self::Down,
-            _ => panic!(),
+    pub fn turn_clockwise(&self) -> Direction {
+        match self {
+            Direction::Up => Direction::Right,
+            Direction::Right => Direction::Down,
+            Direction::Down => Direction::Left,
+            Direction::Left => Direction::Up,
+            _ => panic!("Invalid direction"),
+        }
+    }
+
+    pub fn turn_counterclockwise(&self) -> Direction {
+        match self {
+            Direction::Up => Direction::Left,
+            Direction::Left => Direction::Down,
+            Direction::Down => Direction::Right,
+            Direction::Right => Direction::Up,
+            _ => panic!("Invalid direction"),
+        }
+    }
+
+    pub fn move_forward(&self, pos: (usize, usize)) -> Option<(usize, usize)> {
+        match self {
+            Direction::Up => Some((pos.0.checked_sub(1)?, pos.1)),
+            Direction::Down => Some((pos.0 + 1, pos.1)),
+            Direction::Right => Some((pos.0, pos.1 + 1)),
+            Direction::Left => Some((pos.0, pos.1.checked_sub(1)?)),
+            _ => None,
         }
     }
 }
