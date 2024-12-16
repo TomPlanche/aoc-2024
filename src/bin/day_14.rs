@@ -136,13 +136,13 @@ impl Robots {
     /// * `width` - The width of the grid.
     /// * `height` - The height of the grid.
     /// * `steps` - The number of steps to move the robots.
-    fn move_instances<'a>(
-        &'a self,
+    fn move_instances(
+        &self,
         width: i32,
         height: i32,
         steps: i32,
         // 'a is the lifetime of the iterator, Rust witchcraft to make it work
-    ) -> impl Iterator<Item = (i32, i32)> + 'a {
+    ) -> impl Iterator<Item = (i32, i32)> + '_ {
         let steps_x = steps % width;
         let steps_y = steps % height;
 

@@ -77,9 +77,8 @@ impl FromStr for Warehouse {
         for (y, line) in s.lines().enumerate() {
             let mut row = Vec::new();
             for (x, ch) in line.chars().enumerate() {
-                match ch {
-                    '@' => robot = (y, x),
-                    _ => (),
+                if ch == '@' {
+                    robot = (y, x)
                 }
 
                 row.push(ch.into());
