@@ -11,16 +11,22 @@ use std::str::FromStr;
 // Variables  =========================================================================== Variables
 const INPUT: &str = include_str!("../../data/inputs/day_09.txt");
 
+/// Represents a file on the virtual disk
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd)]
 struct FileDescriptor {
+    /// Unique identifier for the file
     file_id: i64,
+    /// Starting position of file on disk
     pointer: usize,
+    /// Size of file in blocks
     size: usize,
 }
 
 #[derive(Clone, Copy)]
 enum Block {
+    /// Occupied block containing file ID
     Filled(usize),
+    /// Empty/free block
     Empty,
 }
 
@@ -99,6 +105,15 @@ impl FromStr for Disk {
 }
 
 impl Disk {
+    ///
+    /// # get_first_empty
+    /// Finds the first empty block starting from given position
+    ///
+    /// ## Arguments
+    /// * `start` - Position to start searching from
+    ///
+    /// ## Returns
+    /// * `usize` - Index of first empty block
     fn get_first_empty(&self, start: usize) -> usize {
         self.blocks[start..]
             .iter()
@@ -107,6 +122,10 @@ impl Disk {
             + start
     }
 
+    ///
+    /// # rearrange
+    /// Reorganizes blocks to optimize disk space
+    /// Moves all filled blocks to the right and empty blocks to the left
     fn rearrange(&mut self) {
         let mut left = self.get_first_empty(0);
         let mut right = self.blocks.len() - 1;
@@ -118,24 +137,43 @@ impl Disk {
         }
     }
 
+    ///
+    /// # calc_checksum
+    /// Calculates checksum of disk arrangement
+    /// Checksum is sum of (block_index * file_id) for all filled blocks
+    ///
+    /// ## Returns
+    /// * `usize` - Calculated checksum value
     fn rearrange_files(&mut self) {
+        // Iterate through files in reverse order to process larger files first
         for file in self.files.iter().rev() {
-            let mut free_space = file.pointer;
-            let mut old_size = 0;
+            // Initialize variables to track best free space location
+            let mut free_space = file.pointer; // Current file position as default
+            let mut old_size = 0; // Size of free space block we'll use
+
+            // Look for free spaces larger than current file size
             for i in file.size..10 {
+                // Check if there's a free space of size i available
                 if let Some(&Reverse(free)) = self.free_spaces[i].peek() {
+                    // If this free space is earlier in the disk than current best
                     if free < free_space {
-                        free_space = free;
-                        old_size = i;
+                        free_space = free; // Update best free space location
+                        old_size = i; // Store size of this free space block
                     }
                 }
             }
 
+            // If we found a better position (old_size > 0), move the file
             if old_size != 0 {
+                // Swap blocks to move file to new location
                 for i in 0..file.size {
                     self.blocks.swap(free_space + i, file.pointer + i);
                 }
+
+                // Remove used free space from tracking
                 self.free_spaces[old_size].pop();
+
+                // Add new free space where file used to be
                 let new_free_space = Reverse(free_space + file.size);
                 self.free_spaces[old_size - file.size].push(new_free_space);
             }

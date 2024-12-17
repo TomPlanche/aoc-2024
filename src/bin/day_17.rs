@@ -29,12 +29,12 @@ const INPUT: &str = include_str!("../../data/inputs/day_17.txt");
 /// Represents the 3-bit computer with registers and program execution state
 #[derive(Debug)]
 struct Computer {
-    register_a: i32,
-    register_b: i32,
-    register_c: i32,
-    program: Vec<i32>,
+    register_a: i64,
+    register_b: i64,
+    register_c: i64,
+    program: Vec<i64>,
     instruction_pointer: usize,
-    output: Vec<i32>,
+    output: Vec<i64>,
 }
 
 impl Computer {
@@ -47,7 +47,7 @@ impl Computer {
     /// * `register_b` - Initial value for register B
     /// * `register_c` - Initial value for register C
     /// * `program` - Vector of instructions to execute
-    fn new(register_a: i32, register_b: i32, register_c: i32, program: Vec<i32>) -> Self {
+    fn new(register_a: i64, register_b: i64, register_c: i64, program: Vec<i64>) -> Self {
         Computer {
             register_a,
             register_b,
@@ -70,7 +70,7 @@ impl Computer {
     ///
     /// ## Panics
     /// Panics if the operand is 7 or invalid
-    fn get_combo_value(&self, operand: i32) -> i32 {
+    fn get_combo_value(&self, operand: i64) -> i64 {
         match operand {
             0..=3 => operand,
             4 => self.register_a,
@@ -142,10 +142,10 @@ impl Computer {
 /// Represents the input format for the program including initial register values
 #[derive(Debug)]
 struct ProgramInput {
-    register_a: i32,
-    register_b: i32,
-    register_c: i32,
-    program: Vec<i32>,
+    register_a: i64,
+    register_b: i64,
+    register_c: i64,
+    program: Vec<i64>,
 }
 
 impl FromStr for ProgramInput {
@@ -174,7 +174,7 @@ impl FromStr for ProgramInput {
         // Parse registers
         for cap in register_pattern.captures_iter(s) {
             let value = cap[2]
-                .parse::<i32>()
+                .parse::<i64>()
                 .map_err(|_| "Failed to parse register value")?;
 
             match &cap[1] {
@@ -191,7 +191,7 @@ impl FromStr for ProgramInput {
             .ok_or("Failed to find program")?[1]
             .split(',')
             .map(|num| num.trim().parse())
-            .collect::<Result<Vec<i32>, _>>()
+            .collect::<Result<Vec<i64>, _>>()
             .map_err(|_| "Failed to parse program numbers")?;
 
         Ok(ProgramInput {
@@ -202,6 +202,7 @@ impl FromStr for ProgramInput {
         })
     }
 }
+
 // Functions  =========================================================================== Functions
 pub fn response_part_1() {
     println!("Day 17 - Part 1");
@@ -234,14 +235,38 @@ pub fn response_part_2() {
     println!("Day 17 - Part 2");
     let start = std::time::Instant::now();
 
-    let duration = start.elapsed();
+    let input: ProgramInput = INPUT.parse().unwrap();
+    let program = input.program;
 
+    let mut a = 0;
+    // Iterate through positions from end to start
+    for pos in (0..program.len()).rev() {
+        // Shift left by 3 bits for each position
+        a <<= 3;
+
+        // Try values until we find one that outputs the correct sequence
+        loop {
+            let mut computer =
+                Computer::new(a, input.register_b, input.register_c, program.clone());
+            computer.run();
+
+            // Check if the output matches the expected sequence
+            let expected: Vec<i64> = program[pos..].to_vec();
+            if computer.output == expected {
+                break;
+            }
+            a += 1;
+        }
+    }
+
+    let duration = start.elapsed();
+    println!("Result: {a}");
     println!("Duration: {duration:?}");
 }
 
 fn main() {
     response_part_1();
-    //response_part_2();
+    response_part_2();
 }
 
 // Tests ==================================================================================== Tests
