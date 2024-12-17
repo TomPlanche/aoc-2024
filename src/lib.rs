@@ -26,7 +26,7 @@ where
 }
 
 ///
-/// # calculate_variance
+/// # `calculate_variance`
 /// Calculate the variance of the x-coordinates of a list of positions.
 /// The variance is a measure of how spread out the values are.
 ///
@@ -37,13 +37,13 @@ where
 /// * `f64` - The variance of the x-coordinates
 pub fn calculate_variance(positions: &[(i32, i32)]) -> f64 {
     // Calculate the mean of the x-coordinates
-    let mean = positions.iter().map(|&(x, _)| x as f64).sum::<f64>() / positions.len() as f64;
+    let mean = positions.iter().map(|&(x, _)| f64::from(x)).sum::<f64>() / positions.len() as f64;
 
     // Calculate the variance of the x-coordinates
     let variance = positions
         .iter()
         .map(|&(x, _)| {
-            let diff = x as f64 - mean;
+            let diff = f64::from(x) - mean;
 
             diff * diff
         })
