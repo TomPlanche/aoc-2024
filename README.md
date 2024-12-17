@@ -35,6 +35,7 @@ This repository contains my solutions to the [Advent of Code 2024](https://adven
 | [Day 14](src/bin/day_14.rs) | 71.84ms | 55.64ms |
 | [Day 15](src/bin/day_15.rs) | 372.83µs | 453.42µs |
 | [Day 16](src/bin/day_16.rs) | 743.59ms | 672.50ms |
+| [Day 17](src/bin/day_17.rs) | 577.62µs | 140.04µs |
 
 
 ## Running the Solutions
