@@ -1,5 +1,6 @@
 use std::fmt;
 use std::ops::{Add, Sub};
+use std::str::FromStr;
 
 // Define a trait that combines the necessary numeric traits
 pub trait Number:
@@ -102,6 +103,31 @@ impl<T: Number> From<[T; 2]> for Point<T> {
 impl<T: Number> From<Point<T>> for (T, T) {
     fn from(point: Point<T>) -> (T, T) {
         (point.x, point.y)
+    }
+}
+
+impl<T> FromStr for Point<T>
+where
+    T: Number + FromStr,
+    T::Err: std::fmt::Debug,
+{
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<&str> = s.split_whitespace().collect();
+
+        if parts.len() < 2 {
+            return Err("Invalid point format".to_string());
+        }
+
+        let x = parts[0]
+            .parse()
+            .map_err(|e| format!("Failed to parse x coordinate: {:?}", e))?;
+        let y = parts[1]
+            .parse()
+            .map_err(|e| format!("Failed to parse y coordinate: {:?}", e))?;
+
+        Ok(Point { x, y })
     }
 }
 
