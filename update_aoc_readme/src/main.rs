@@ -28,6 +28,10 @@ impl FromStr for Time {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s == "" {
+            return Err(());
+        }
+
         let time_regex = Regex::new(r"(?P<value>\d+\.\d+)(?P<unit>\w+)").unwrap();
         let captures = time_regex.captures(s).unwrap();
 
@@ -100,7 +104,7 @@ fn get_existing_days_in_readme() -> Vec<Day> {
     let readme_content = std::fs::read_to_string(readme_path).unwrap();
 
     let day_regex =
-        Regex::new(r"\| \[Day (?P<day_number>\d+)\]\(src/bin/day_(?:\d+)\.rs\) \| (?P<part_1>.*?) \| (?P<part_2>.*?) \|")
+        Regex::new(r"\| \[Day (?P<day_number>\d+)\]\(src/bin/day_(?:\d+)\.rs\) \| (?P<part_1>.*?) \| (?P<part_2>.*?)? \|")
             .unwrap();
 
     day_regex
@@ -115,11 +119,11 @@ fn get_existing_days_in_readme() -> Vec<Day> {
 
             let part_1 = captures
                 .name("part_1")
-                .map(|time| Time::from_str(time.as_str()).unwrap());
+                .and_then(|time| Time::from_str(time.as_str()).ok());
 
             let part_2 = captures
                 .name("part_2")
-                .map(|time| Time::from_str(time.as_str()).unwrap());
+                .and_then(|time| Time::from_str(time.as_str()).ok());
 
             Day {
                 number: day_number,

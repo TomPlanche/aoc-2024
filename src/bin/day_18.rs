@@ -242,6 +242,50 @@ pub fn response_part_2() {
     println!("Day 18 - Part 2");
     let start = std::time::Instant::now();
 
+    // Parse all coordinates from input
+    let coords: Vec<MyPoint> = INPUT
+        .trim()
+        .lines()
+        .filter_map(|line| {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() == 2 {
+                Some(Point {
+                    x: parts[1].trim().parse().unwrap(),
+                    y: parts[0].trim().parse().unwrap(),
+                })
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Try each coordinate in sequence until we find one that blocks the path
+    for (i, &coord) in coords.iter().enumerate() {
+        // Create a grid with coordinates up to the current one
+        let partial_input = coords[..=i]
+            .iter()
+            .map(|p| format!("{},{}", p.y, p.x))
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        let grid = Grid::new(&partial_input, false);
+
+        // Check if there's still a path to the exit
+        let has_path = grid.find_shortest_path(
+            Point { x: 0, y: 0 },
+            Point {
+                x: grid.size - 1,
+                y: grid.size - 1,
+            },
+        );
+
+        // If no path exists, we found our blocking coordinate
+        if has_path.is_none() {
+            println!("Blocking coordinate: {},{}", coord.y, coord.x);
+            break;
+        }
+    }
+
     let duration = start.elapsed();
 
     println!("Duration: {duration:?}");
@@ -249,7 +293,7 @@ pub fn response_part_2() {
 
 fn main() {
     response_part_1();
-    // response_part_2();
+    response_part_2();
 }
 
 // Tests ==================================================================================== Tests
