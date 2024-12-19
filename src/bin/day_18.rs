@@ -228,8 +228,8 @@ pub fn response_part_1() {
     if let Some((steps, _path)) = shortest_path {
         println!("Shortest path: {steps}");
 
-        // // Display the path
-        // println!("{}", grid.display_with_path(&_path));
+        // Display the path
+        println!("{}", grid.display_with_path(&_path));
     } else {
         println!("No path found");
     }
