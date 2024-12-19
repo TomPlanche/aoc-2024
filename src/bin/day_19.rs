@@ -3,7 +3,7 @@
 /// Code for the day 19 of the Advent of Code challenge year 2024
 ///
 // Imports  ==============================================================================  Imports
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 // Variables  =========================================================================== Variables
 const INPUT: &str = include_str!("../../data/inputs/day_19.txt");
@@ -99,6 +99,77 @@ impl TowelGenerator {
             .filter(|design| self.is_design_possible(design))
             .count()
     }
+
+    ///
+    /// # `count_arrangements`
+    /// Count the number of possible arrangements for a given design.
+    ///
+    /// ## Arguments
+    /// * `design` - The design to count arrangements for
+    ///
+    /// ## Returns
+    /// * `usize` - The number of possible arrangements
+    fn count_arrangements(&self, design: &str) -> usize {
+        let mut already_computed = HashMap::new();
+        let max_pattern_len = self.available_towels.iter().map(|v| v.len()).max().unwrap();
+
+        self.find_arrangements(design, &mut already_computed, max_pattern_len)
+    }
+
+    ///
+    /// # `find_arrangements`
+    /// Find the number of possible arrangements for a given pattern.
+    ///
+    /// ## Algorithm
+    /// Simple recursive algorithm to find all possible arrangements of a pattern with a memoization hashmap.
+    ///
+    /// ## Arguments
+    /// * `pattern` - The pattern to find arrangements for
+    /// * `memo` - A memoization hashmap to store already computed values
+    /// * `max_len` - The maximum length of a pattern
+    ///
+    /// ## Returns
+    /// * `usize` - The number of possible arrangements
+    fn find_arrangements(
+        &self,
+        pattern: &str,
+        memo: &mut HashMap<String, usize>,
+        max_len: usize,
+    ) -> usize {
+        let mut combinations = 0;
+        if memo.contains_key(pattern) {
+            return *memo.get(pattern).unwrap();
+        }
+        if pattern.is_empty() {
+            return 1;
+        }
+
+        for i in 1..=max_len.min(pattern.len()) {
+            if self.available_towels.contains(&&pattern[..i].into()) {
+                let subcount = self.find_arrangements(&pattern[i..], memo, max_len);
+                combinations += subcount;
+            }
+        }
+        memo.insert(pattern.into(), combinations);
+        combinations
+    }
+
+    ///
+    /// `sum_all_arrangements`
+    /// Sum the number of possible arrangements for all possible designs.
+    ///
+    /// ## Returns
+    /// * `usize` - The sum of possible arrangements
+    fn sum_all_arrangements(&self) -> usize {
+        let desired_designs = self
+            .desired_designs
+            .iter()
+            .filter(|design| self.is_design_possible(design));
+
+        desired_designs
+            .map(|design| self.count_arrangements(design))
+            .sum()
+    }
 }
 // Functions  =========================================================================== Functions
 pub fn response_part_1() {
@@ -118,14 +189,18 @@ pub fn response_part_2() {
     println!("Day 19 - Part 2");
     let start = std::time::Instant::now();
 
+    let generator: TowelGenerator = INPUT.parse().unwrap();
+    let count = generator.sum_all_arrangements();
+
     let duration = start.elapsed();
 
+    println!("Count: {count}");
     println!("Duration: {duration:?}");
 }
 
 fn main() {
     response_part_1();
-    //response_part_2();
+    response_part_2();
 }
 
 // Tests ==================================================================================== Tests
@@ -178,5 +253,25 @@ bbrgwb";
         let generator: TowelGenerator = EXAMPLE.parse().unwrap();
 
         assert_eq!(generator.count_possible_designs(), 6);
+    }
+
+    #[test]
+    fn test_count_arrangements() {
+        let generator: TowelGenerator = EXAMPLE.parse().unwrap();
+
+        assert_eq!(generator.count_arrangements("brwrr"), 2); // b,r,wr,r or br,wr,r
+        assert_eq!(generator.count_arrangements("bggr"), 1); // b,g,g,r
+        assert_eq!(generator.count_arrangements("gbbr"), 4); // g,b,b,r or g,b,br or gb,b,r or gb,br
+        assert_eq!(generator.count_arrangements("rrbgbr"), 6); // All 6 combinations
+        assert_eq!(generator.count_arrangements("ubwu"), 0); // Impossible
+        assert_eq!(generator.count_arrangements("bwurrg"), 1); // bwu,r,r,g
+        assert_eq!(generator.count_arrangements("brgr"), 2); // b,r,g,r or br,g,r
+        assert_eq!(generator.count_arrangements("bbrgwb"), 0); // Impossible
+    }
+
+    #[test]
+    fn test_sum_all_arrangements() {
+        let generator: TowelGenerator = EXAMPLE.parse().unwrap();
+        assert_eq!(generator.sum_all_arrangements(), 16);
     }
 }
