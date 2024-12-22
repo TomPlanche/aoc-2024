@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::fmt;
 use std::ops::{Add, Sub};
 use std::str::FromStr;
@@ -23,7 +24,7 @@ impl Number for f32 {}
 impl Number for f64 {}
 impl Number for usize {}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub struct Point<T: Number> {
     pub x: T,
     pub y: T,
@@ -130,6 +131,14 @@ where
         Ok(Point { x, y })
     }
 }
+
+impl<T: Number> PartialEq for Point<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+
+impl<T: Number> Eq for Point<T> {}
 
 #[cfg(test)]
 mod tests {
