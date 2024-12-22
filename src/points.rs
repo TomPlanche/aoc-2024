@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::fmt;
 use std::ops::{Add, Sub};
 use std::str::FromStr;
