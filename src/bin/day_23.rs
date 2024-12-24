@@ -96,6 +96,119 @@ impl Graph {
 
         triads
     }
+
+    ///
+    /// # `find_maximum_clique`
+    /// Finds the maximum clique in the graph using the Bron-Kerbosch algorithm
+    /// with pivoting for better performance
+    ///
+    /// ## Returns
+    /// * `Vec<String>` - Sorted vector of node names in the maximum clique
+    fn find_maximum_clique(&self) -> Vec<String> {
+        let mut max_clique = HashSet::new();
+        let mut candidates: HashSet<_> = self.adj_list.keys().cloned().collect();
+        let mut excluded = HashSet::new();
+
+        self.bron_kerbosch(
+            &mut HashSet::new(),
+            &mut candidates,
+            &mut excluded,
+            &mut max_clique,
+        );
+
+        let mut result: Vec<_> = max_clique.into_iter().collect();
+        result.sort();
+
+        result
+    }
+
+    ///
+    /// # `bron_kerbosch`
+    /// Recursive helper for the Bron-Kerbosch algorithm with pivoting
+    ///
+    /// ## Algorithm
+    /// The Bron-Kerbosch algorithm finds all maximal cliques in an undirected graph using
+    /// recursive backtracking with three sets:
+    /// 1. `clique`: vertices in the current clique being built
+    /// 2. `candidates`: vertices that could extend the current clique
+    /// 3. `excluded`: vertices already processed that can't be in the current clique
+    ///
+    /// The algorithm works as follows:
+    /// 1. Base case: When both candidates and excluded sets are empty, we've found a maximal clique.
+    ///    If it's larger than our previous best, update max_clique.
+    ///
+    /// 2. Pivot selection (optimization):
+    ///    - Choose a vertex (pivot) from candidates ∪ excluded that connects to the most candidates
+    ///    - This helps skip branches that won't lead to maximal cliques
+    ///    - Only process candidates not connected to the pivot
+    ///
+    /// 3. For each candidate v not connected to the pivot:
+    ///    a. Remove v from candidates and add it to the current clique
+    ///    b. Create new candidate set: vertices in old candidates that connect to v
+    ///    c. Create new excluded set: vertices in old excluded that connect to v
+    ///    d. Recurse with updated sets
+    ///    e. Remove v from clique and add to excluded
+    ///
+    /// ## Arguments
+    /// * `clique` - Current clique being built
+    /// * `candidates` - Candidate vertices that could extend the clique
+    /// * `excluded` - Vertices that have already been processed
+    /// * `max_clique` - Reference to store the maximum clique found so far
+    fn bron_kerbosch(
+        &self,
+        clique: &mut HashSet<String>,
+        candidates: &mut HashSet<String>,
+        excluded: &mut HashSet<String>,
+        max_clique: &mut HashSet<String>,
+    ) {
+        if candidates.is_empty() && excluded.is_empty() {
+            if clique.len() > max_clique.len() {
+                max_clique.clear();
+                max_clique.extend(clique.iter().cloned());
+            }
+
+            return;
+        }
+
+        // Choose pivot vertex that maximizes the number of edges to candidates
+        let pivot = candidates
+            .iter()
+            .chain(excluded.iter())
+            .max_by_key(|&v| {
+                candidates
+                    .iter()
+                    .filter(|&u| self.adj_list[v].contains(u))
+                    .count()
+            })
+            .unwrap()
+            .clone();
+
+        // Process vertices not connected to pivot
+        let candidates_copy = candidates.clone();
+        for v in candidates_copy.iter() {
+            if !self.adj_list[&pivot].contains(v) {
+                candidates.remove(v);
+                clique.insert(v.clone());
+
+                let mut new_candidates: HashSet<_> = candidates
+                    .iter()
+                    .filter(|&u| self.adj_list[v].contains(u))
+                    .cloned()
+                    .collect();
+
+                let mut new_excluded: HashSet<_> = excluded
+                    .iter()
+                    .filter(|&u| self.adj_list[v].contains(u))
+                    .cloned()
+                    .collect();
+
+                self.bron_kerbosch(clique, &mut new_candidates, &mut new_excluded, max_clique);
+
+                clique.remove(v);
+                excluded.insert(v.clone());
+            }
+        }
+    }
 }
 
 // Functions ============================================================================ Functions
@@ -116,13 +229,18 @@ pub fn response_part_2() {
     println!("Day 23 - Part 2");
     let start = std::time::Instant::now();
 
+    let graph: Graph = INPUT.parse().unwrap();
+    let max_clique = graph.find_maximum_clique().join(",");
+
     let duration = start.elapsed();
+
+    println!("Result: {max_clique}");
     println!("Duration: {duration:?}");
 }
 
 fn main() {
     response_part_1();
-    //response_part_2();
+    response_part_2();
 }
 
 #[cfg(test)]
@@ -164,7 +282,16 @@ tb-vc
 td-yn";
 
     #[test]
-    fn test_solve_part1() {
+    fn test_graph_construction() {
+        let graph: Graph = "a-b\nb-c\nc-a".parse().unwrap();
+
+        assert!(graph.adj_list["a"].contains("b"));
+        assert!(graph.adj_list["b"].contains("c"));
+        assert!(graph.adj_list["c"].contains("a"));
+    }
+
+    #[test]
+    fn test_solve_part_1() {
         let graph: Graph = TEST_INPUT.parse().unwrap();
         let result = graph.find_triads_with_t().len();
 
@@ -172,11 +299,17 @@ td-yn";
     }
 
     #[test]
-    fn test_graph_construction() {
-        let graph: Graph = "a-b\nb-c\nc-a".parse().unwrap();
+    fn test_small_clique() {
+        let graph: Graph = "a-b\nb-c\nc-a\na-c".parse().unwrap();
 
-        assert!(graph.adj_list["a"].contains("b"));
-        assert!(graph.adj_list["b"].contains("c"));
-        assert!(graph.adj_list["c"].contains("a"));
+        assert_eq!(graph.find_maximum_clique(), vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn test_solve_part_2() {
+        let graph: Graph = TEST_INPUT.parse().unwrap();
+        let result = graph.find_maximum_clique().join(",");
+
+        assert_eq!(result, "co,de,ka,ta");
     }
 }
