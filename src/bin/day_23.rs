@@ -2,7 +2,7 @@
 /// # Day 23: LAN Party
 /// Solution for the Advent of Code 2024 Day 23 challenge.
 /// Finds sets of three interconnected computers in a network where at least
-/// one computer name starts with 't'.
+/// one computer name starts with 't'
 ///
 use std::{
     collections::{HashMap, HashSet},

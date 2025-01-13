@@ -4,6 +4,7 @@
 /// signals through the circuit. Supports XOR, AND, and OR operations.
 ///
 // Imports ================================================================================ Imports
+use itertools::Itertools;
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -201,6 +202,129 @@ impl Circuit {
         let state = self.evaluate()?;
         Ok(state.get(output_name).copied())
     }
+
+    fn test_as_adder(&self, num_bits: usize) -> bool {
+        // Test several input combinations
+        let test_cases = [
+            (0, 0),   // 0 + 0
+            (1, 1),   // 1 + 1
+            (3, 5),   // 11 + 101
+            (7, 9),   // 111 + 1001
+            (15, 15), // 1111 + 1111
+        ];
+
+        for (x, y) in test_cases {
+            // Create test inputs
+            let mut test_inputs = HashMap::new();
+            for i in 0..num_bits {
+                test_inputs.insert(format!("x{:02}", i), ((x >> i) & 1) == 1);
+                test_inputs.insert(format!("y{:02}", i), ((y >> i) & 1) == 1);
+            }
+
+            let test_circuit = Circuit {
+                inputs: test_inputs,
+                gates: self.gates.clone(),
+            };
+
+            // Evaluate circuit
+            let state = match test_circuit.evaluate() {
+                Ok(s) => s,
+                Err(_) => return false,
+            };
+
+            // Get result from z wires
+            let mut result = 0u64;
+            for i in 0..num_bits + 1 {
+                // +1 for carry
+                if let Some(&value) = state.get(&format!("z{:02}", i)) {
+                    if value {
+                        result |= 1 << i;
+                    }
+                }
+            }
+
+            // Verify result matches expected sum
+            if result != (x + y) as u64 {
+                return false;
+            }
+        }
+        true
+    }
+
+    /// Gets all gates with outputs that could potentially be swapped
+    fn get_swappable_gates(&self) -> Vec<(String, String)> {
+        // Collect all gate outputs
+        let outputs: Vec<String> = self
+            .gates
+            .iter()
+            .map(|gate| match gate {
+                Gate::And(_, _, out) => out.clone(),
+                Gate::Or(_, _, out) => out.clone(),
+                Gate::Xor(_, _, out) => out.clone(),
+            })
+            .collect();
+
+        // Generate all possible pairs
+        outputs
+            .iter()
+            .combinations(2)
+            .map(|pair| (pair[0].clone(), pair[1].clone()))
+            .collect()
+    }
+
+    /// Creates a new circuit with specified output wires swapped
+    fn with_swapped_outputs(&self, swaps: &[(String, String)]) -> Circuit {
+        let mut new_gates = self.gates.clone();
+
+        // Apply swaps
+        for (out1, out2) in swaps {
+            for gate in &mut new_gates {
+                match gate {
+                    Gate::And(_, _, out) | Gate::Or(_, _, out) | Gate::Xor(_, _, out) => {
+                        if out == out1 {
+                            *out = out2.clone();
+                        } else if out == out2 {
+                            *out = out1.clone();
+                        }
+                    }
+                }
+            }
+        }
+
+        Circuit {
+            inputs: self.inputs.clone(),
+            gates: new_gates,
+        }
+    }
+
+    /// Finds the four pairs of gates that need to be swapped
+    pub fn find_broken_gates(&self) -> Option<Vec<String>> {
+        let candidates = self.get_swappable_gates();
+        let mut result = None;
+        let max_bits = 64; // Maximum number of bits to consider
+
+        // Try different combinations of 4 swaps
+        for swap_combo in (0..candidates.len()).combinations(4).map(|indices| {
+            indices
+                .into_iter()
+                .map(|i| candidates[i].clone())
+                .collect::<Vec<(String, String)>>()
+        }) {
+            let test_circuit = self.with_swapped_outputs(&swap_combo);
+            if test_circuit.test_as_adder(max_bits) {
+                // Found correct combination - collect wire names
+                let mut wires: Vec<String> = swap_combo
+                    .iter()
+                    .flat_map(|(a, b)| vec![a.clone(), b.clone()])
+                    .collect();
+                wires.sort();
+                result = Some(wires);
+                break;
+            }
+        }
+
+        result
+    }
 }
 
 pub fn response_part_1() {
@@ -229,7 +353,16 @@ pub fn response_part_2() {
     println!("Day 24 - Part 2");
     let start = std::time::Instant::now();
 
-    // Part 2 solution will go here...
+    let circuit = Circuit::from_str(INPUT).unwrap();
+
+    // Find and fix the broken gates
+    match circuit.find_broken_gates() {
+        Some(wires) => {
+            let result = wires.join(",");
+            println!("Result: {}", result);
+        }
+        None => println!("No solution found!"),
+    }
 
     let duration = start.elapsed();
     println!("Duration: {duration:?}");
@@ -237,7 +370,7 @@ pub fn response_part_2() {
 
 fn main() {
     response_part_1();
-    //response_part_2();
+    response_part_2();
 }
 
 // Tests ==================================================================================== Tests
