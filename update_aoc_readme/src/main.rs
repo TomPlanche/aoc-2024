@@ -1,10 +1,17 @@
 // Imports  ==============================================================================  Imports
-
+use clap::Parser;
+use regex::Regex;
 use std::{path::Path, process::Command, str::FromStr};
 
-use regex::Regex;
-
 // Variables  =========================================================================== Variables
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Update all days instead of only les
+    #[arg(short, long)]
+    all: bool,
+}
+
 #[derive(Debug, Clone)]
 struct Time {
     number: f32,
@@ -180,13 +187,39 @@ fn time_execution(day: Day) -> Day {
 ///
 /// # `update_readme`
 /// Update the README.md file with the new days.
-fn update_readme() {
+///
+/// ## Arguments
+/// * `update_all`: Update all days instead of only les.
+fn update_readme(update_all: bool) {
     let readme_path = Path::new("README.md");
 
     let existing_days = get_existing_days_in_readme();
-    let staged_days = git_staged_files_to_days();
+    let days_to_process = if update_all {
+        // Get all days from the src/bin directory
+        let entries = std::fs::read_dir("src/bin").unwrap();
+        let day_regex = Regex::new(r"day_(\d+)\.rs").unwrap();
 
-    let days_to_update = staged_days
+        entries
+            .filter_map(|entry| {
+                let entry = entry.unwrap();
+                let file_name = entry.file_name().to_string_lossy().to_string();
+                if let Some(captures) = day_regex.captures(&file_name) {
+                    let day_number = captures.get(1).unwrap().as_str().parse::<u8>().unwrap();
+                    Some(Day {
+                        number: day_number,
+                        part_1: None,
+                        part_2: None,
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect()
+    } else {
+        git_staged_files_to_days()
+    };
+
+    let days_to_update = days_to_process
         .iter()
         .filter(|staged_day| {
             // Get corresponding existing day if it exists
@@ -302,7 +335,8 @@ fn main() {
     let current = Path::new("/Users/tom_planche/Desktop/Prog/Rust/all_aoc/aoc_2024");
     std::env::set_current_dir(current).unwrap();
 
-    update_readme();
+    let args = Args::parse();
+    update_readme(args.all);
 }
 
 // Tests

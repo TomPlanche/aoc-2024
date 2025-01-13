@@ -38,6 +38,12 @@ This repository contains my solutions to the [Advent of Code 2024](https://adven
 | [Day 17](src/bin/day_17.rs) | 577.62µs | 140.04µs |
 | [Day 18](src/bin/day_18.rs) | 810.21µs | 1.37s |
 | [Day 19](src/bin/day_19.rs) | 2.62ms | 39.50ms |
+| [Day 20](src/bin/day_20.rs) | 8.46ms | 11.12ms |
+| [Day 21](src/bin/day_21.rs) | 93.79µs | 247.75µs |
+| [Day 22](src/bin/day_22.rs) | 7.81ms | 110.09ms |
+| [Day 23](src/bin/day_23.rs) | 9.51ms | 29.86ms |
+| [Day 24](src/bin/day_24.rs) | 45.57ms | 4.41ms |
+| [Day 25](src/bin/day_25.rs) | 622.08µs | MERRY CHRISTMAS! |
 
 
 ## Running the Solutions
